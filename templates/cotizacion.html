@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Placas - Cotización</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Agregar Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e1e1e, #2c2c2c);
+            color: #ffffff;
+            padding: 40px 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .header img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .header p {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .card {
+            background-color: #1e1e1e;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+        .btn-secondary {
+            background-color: #444;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 400;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #555;
+        }
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+        .form-label {
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+        .form-control, .form-select {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            border-radius: 6px;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            border-color: #FFC107;
+            box-shadow: none;
+        }
+        .text-danger {
+            color: #ff5252;
+            font-weight: 500;
+        }
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 20px 0;
+            }
+            .header img {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Estilos personalizados para Select2 */
+        .select2-container--default .select2-selection--single {
+            background-color: #2c2c2c !important;
+            color: #e0e0e0 !important;
+            border: 1px solid #444 !important;
+            border-radius: 6px !important;
+            height: 38px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #e0e0e0 !important;
+            line-height: 36px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+        }
+        .select2-container--default .select2-dropdown {
+            background-color: #1e1e1e !important;
+            border: 1px solid #444 !important;
+            border-radius: 6px !important;
+        }
+        .select2-container--default .select2-results__option {
+            color: #e0e0e0 !important;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #444 !important;
+            color: #ffffff !important;
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            background-color: #2c2c2c !important;
+            color: #e0e0e0 !important;
+            border: 1px solid #444 !important;
+        }
+        /* Limitar la altura del dropdown */
+        .select2-container--default .select2-results > .select2-results__options {
+            max-height: 200px !important;
+            overflow-y: auto !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabecera con logo -->
+    <div class="header">
+        <img src="/static/img/logo_negro_y_blanco.png" alt="Logo Amilgraf">
+        <div>
+            <h1>Sistema de Gestión de Placas</h1>
+            <p>Cotización de Impresión Offset</p>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">Crear Cotización</h2>
+            </div>
+        </div>
+
+        <!-- Tarjeta con formulario -->
+        <div class="card">
+            <form id="cotizacionForm">
+                <div class="mb-3">
+                    <label for="papel" class="form-label">Tipo de Papel</label>
+                    <select class="form-select" id="papel" required>
+                        <option value="">Seleccione un papel</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="placa" class="form-label">Placa</label>
+                    <select class="form-select" id="placa" required>
+                        <option value="">Seleccione una placa</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="cantidad" class="form-label">Cantidad de Impresiones</label>
+                    <input type="number" class="form-control" id="cantidad" min="1" required>
+                </div>
+                <div class="mb-3">
+                    <label for="resultado" class="form-label">Costo Total Estimado</label>
+                    <input type="text" class="form-control" id="resultado" readonly>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="calcularCotizacion()">Calcular Cotización</button>
+            </form>
+            <div class="text-end mt-3">
+                <a href="/" class="btn btn-secondary">Volver a Placas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Agregar jQuery (necesario para Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Agregar Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        async function loadPapeles() {
+            try {
+                const response = await fetch('/api/papeles');
+                const papeles = await response.json();
+                const selectPapel = document.getElementById('papel');
+                selectPapel.innerHTML = '<option value="">Seleccione un papel</option>';
+                papeles.forEach(papel => {
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify(papel);
+                    option.textContent = `${papel.tipo} (${papel.tamano}) - S/ ${papel.costo_resma}`;
+                    selectPapel.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar papeles:', error);
+            }
+        }
+
+        async function loadPlacas() {
+            try {
+                const response = await fetch('/api/placas_con_costos');
+                const placas = await response.json();
+
+                // Filtrar placas con costo disponible
+                const placasConCosto = placas.filter(placa => placa.costo != null);
+
+                // Agrupar placas por tamaño (ancho x alto)
+                const gruposPorTamano = {};
+                placasConCosto.forEach(placa => {
+                    const key = `${placa.ancho}x${placa.alto}`;
+                    if (!gruposPorTamano[key]) {
+                        gruposPorTamano[key] = [];
+                    }
+                    gruposPorTamano[key].push(placa);
+                });
+
+                const selectPlaca = document.getElementById('placa');
+                selectPlaca.innerHTML = '<option value="">Seleccione una placa</option>';
+
+                // Crear optgroups por cada tamaño
+                for (const [tamano, placasGrupo] of Object.entries(gruposPorTamano)) {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = `Tamaño: ${tamano}`;
+                    placasGrupo.forEach(placa => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(placa);
+                        option.textContent = `${placa.referencia} - S/ ${parseFloat(placa.costo).toFixed(2)}`;
+                        optgroup.appendChild(option);
+                    });
+                    selectPlaca.appendChild(optgroup);
+                }
+
+                // Inicializar Select2 en el dropdown de placas
+                $(selectPlaca).select2({
+                    placeholder: "Seleccione una placa",
+                    allowClear: true,
+                    width: '100%'
+                });
+            } catch (error) {
+                console.error('Error al cargar placas:', error);
+            }
+        }
+
+        function calcularCotizacion() {
+            const papelSelect = document.getElementById('papel');
+            const placaSelect = document.getElementById('placa');
+            const cantidadInput = document.getElementById('cantidad');
+            const resultadoInput = document.getElementById('resultado');
+
+            if (!papelSelect.value || !placaSelect.value || !cantidadInput.value) {
+                resultadoInput.value = 'Por favor, complete todos los campos.';
+                return;
+            }
+
+            const papel = JSON.parse(papelSelect.value);
+            const placa = JSON.parse(placaSelect.value);
+            const cantidad = parseInt(cantidadInput.value);
+
+            // Calcular costo por pliego
+            const costoPorPliego = papel.costo_resma / papel.pliegos_por_resma;
+            // Suponer que cada impresión usa un pliego y una placa (ajustar según lógica real)
+            const costoPapel = costoPorPliego * cantidad;
+            const costoPlaca = placa.costo ? parseFloat(placa.costo) : 0;
+            const costoTotal = costoPapel + costoPlaca;
+
+            resultadoInput.value = `S/ ${costoTotal.toFixed(2)}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPapeles();
+            loadPlacas();
+        });
+    </script>
+</body>
+</html>

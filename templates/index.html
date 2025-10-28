@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Placas - Consulta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Cabecera */
+        .header {
+            background: linear-gradient(135deg, #1e1e1e, #2c2c2c);
+            color: #ffffff;
+            padding: 40px 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .header img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .header p {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        /* Contenedor principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        /* Tarjeta */
+        .card {
+            background-color: #1e1e1e;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+
+        /* Tabla */
+        .table-responsive {
+            border-radius: 12px;
+            overflow-x: auto; /* Permitir scroll horizontal en móviles */
+        }
+        .table {
+            margin-bottom: 0;
+            color: #e0e0e0;
+        }
+        .table th {
+            background-color: #2c2c2c;
+            color: #FFC107; /* Color ámbar para los encabezados */
+            font-weight: 600;
+            text-align: center;
+            padding: 8px;
+            border: none;
+        }
+        .table td {
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+            border-bottom: 1px solid #333;
+        }
+        /* Ajuste para mejorar el contraste de las filas impares */
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #4b4b4b; /* Gris más claro para mayor contraste */
+        }
+        .table-striped tbody tr:nth-of-type(odd) td {
+            color: #ffffff; /* Texto blanco solo en filas impares */
+        }
+        .table-striped tbody tr:hover {
+            background-color: #444444; /* Color hover ajustado */
+            transition: background-color 0.3s ease;
+        }
+
+        /* Botón */
+        .btn-secondary {
+            background-color: #444;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 400;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #555;
+        }
+
+        /* Títulos de sección */
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        /* Alineación */
+        .text-center {
+            text-align: center;
+        }
+        .text-danger {
+            color: #ff5252;
+            font-weight: 500;
+        }
+
+        /* Media query para móviles */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 20px 0;
+            }
+            .header img {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabecera con logo -->
+    <div class="header">
+        <img src="/static/img/logo_negro_y_blanco.png" alt="Logo Amilgraf">
+        <div>
+            <h1>Sistema de Gestión de Placas</h1>
+            <p>Consulta de información</p>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">Placas y Costos Asociados</h2>
+            </div>
+        </div>
+
+        <!-- Tarjeta con tabla -->
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-striped" id="placasTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Referencia</th>
+                            <th>Ancho</th>
+                            <th>Alto</th>
+                            <th>Pinza</th>
+                            <th>Costo</th>
+                            <th>Última Actualización</th>
+                        </tr>
+                    </thead>
+                    <tbody id="placasTableBody">
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Botón "Ver Envíos" dentro de la tarjeta -->
+            <div class="text-end mt-3">
+                <a href="/envios" class="btn btn-secondary">Ver Envíos</a>
+                <a href="/cotizacion" class="btn btn-secondary">Crear Cotización</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    async function loadPlacasAndCostos() {
+        try {
+            const response = await fetch('/api/placas_con_costos');
+            const placas = await response.json();
+            
+            const tableBody = document.getElementById('placasTableBody');
+            tableBody.innerHTML = '';
+            
+            placas.forEach(placa => {
+                const costo = placa.costo !== null ? `S/ ${parseFloat(placa.costo).toFixed(2)}` : 'No Disponible';
+                const updatedAt = placa.updated_at ? new Date(placa.updated_at).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }) : 'N/A';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${placa.id}</td>
+                    <td>${placa.referencia}</td>
+                    <td>${placa.ancho}</td>
+                    <td>${placa.alto}</td>
+                    <td>${placa.pinza}</td>
+                    <td>${costo}</td>
+                    <td>${updatedAt}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error al cargar datos:', error);
+            document.getElementById('placasTableBody').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error al cargar los datos</td></tr>';
+        }
+    }
+
+    // Cargar datos al iniciar la página y actualizar cada 5 minutos
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPlacasAndCostos(); // Carga inicial
+        setInterval(loadPlacasAndCostos, 300000); // Actualiza cada 5 minutos
+    });
+</script>
+</body>
+</html>
