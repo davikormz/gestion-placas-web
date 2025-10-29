@@ -189,36 +189,42 @@ def logout():
     flash('Has cerrado sesión.', 'info')
     return redirect(url_for('login'))
 
-""" @app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('envios_page'))
+# --- RUTA DE REGISTRO DESHABILITADA ---
+# Se comenta para que nadie pueda registrarse.
+# Para registrar un nuevo proveedor, descomenta temporalmente esta ruta,
+# registra al usuario desde la web y vuelve a comentarla.
+#
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     if current_user.is_authenticated:
+#         return redirect(url_for('envios_page'))
 
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+#     if request.method == 'POST':
+#         email = request.form['email']
+#         password = request.form['password']
         
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM proveedores WHERE email = %s", (email,))
-            existing_user = cursor.fetchone()
+#         conn = get_db_connection()
+#         with conn.cursor() as cursor:
+#             cursor.execute("SELECT * FROM proveedores WHERE email = %s", (email,))
+#             existing_user = cursor.fetchone()
             
-            if existing_user:
-                flash('Ese email ya está registrado. Por favor, inicia sesión.', 'warning')
-                return redirect(url_for('login'))
+#             if existing_user:
+#                 flash('Ese email ya está registrado. Por favor, inicia sesión.', 'warning')
+#                 return redirect(url_for('login'))
             
-            hashed_password = generate_password_hash(password)
-            cursor.execute("INSERT INTO proveedores (email, password_hash) VALUES (%s, %s)",
-                           (email, hashed_password))
-            conn.commit() 
+#             hashed_password = generate_password_hash(password)
+#             cursor.execute("INSERT INTO proveedores (email, password_hash) VALUES (%s, %s)",
+#                            (email, hashed_password))
+#             conn.commit() 
             
-        conn.close()
+#         conn.close()
         
-        flash('¡Registro exitoso! Ahora puedes iniciar sesión.', 'success')
-        return redirect(url_for('login'))
+#         flash('¡Registro exitoso! Ahora puedes iniciar sesión.', 'success')
+#         return redirect(url_for('login'))
 
-    return render_template('register.html') """
+#     return render_template('register.html')
 
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
+
