@@ -4,3 +4,4 @@ mysql-connector-python==9.2.0
 Jinja2
 Requests
 gunicorn
+Flask-Login

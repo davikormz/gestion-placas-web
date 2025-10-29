@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Proveedores</title>
+    <!-- Cargar Tailwind CSS para un diseño limpio -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos simples para las alertas de 'flash' */
+        .alert-success { background-color: #d4edda; color: #155724; padding: 0.75rem; border: 1px solid #c3e6cb; border-radius: 0.25rem; margin-bottom: 1rem; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; padding: 0.75rem; border: 1px solid #f5c6cb; border-radius: 0.25rem; margin-bottom: 1rem; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; padding: 0.75rem; border: 1px solid #bee5eb; border-radius: 0.25rem; margin-bottom: 1rem; }
+        .alert-warning { background-color: #fff3cd; color: #856404; padding: 0.75rem; border: 1px solid #ffeeba; border-radius: 0.25rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            
+            <!-- Bloque para mostrar mensajes 'flash' de Flask -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                    <div class="alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- El contenido de las páginas (login, register) irá aquí -->
+            {% block content %}{% endblock %}
+
+        </div>
+    </div>
+</body>
+</html>
