@@ -1,27 +1,20 @@
 import os
 import pymysql
-# 1. IMPORTAMOS LOCALE para meses en español
-import locale
-# importaciones para login y seguridad
+# 1. NO Usamos 'locale'. Es poco fiable en servidores.
+# import locale 
 from flask import Flask, render_template, jsonify, request, flash, redirect, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-# 2. CONFIGURAMOS LOCALE para español
-# Esto es para que .strftime('%B') devuelva "Octubre" en lugar de "October"
-# Se intenta con configuraciones comunes para Linux y Windows.
-try:
-    # Para sistemas basados en UNIX (como Render)
-    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-except locale.Error:
-    try:
-        # Para Windows
-        locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252')
-    except locale.Error:
-        print("Advertencia: No se pudo establecer el 'locale' a español. Los meses podrían aparecer en inglés.")
-
+# 2. Creamos un diccionario de traducción manual. 100% fiable.
+MESES_ESPANOL = {
+    "January": "Enero", "February": "Febrero", "March": "Marzo",
+    "April": "Abril", "May": "Mayo", "June": "Junio",
+    "July": "Julio", "August": "Agosto", "September": "Septiembre",
+    "October": "Octubre", "November": "Noviembre", "December": "Diciembre"
+}
 
 # --- Clave Secreta ---
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave-secreta-para-desarrollo-local')
@@ -73,8 +66,6 @@ def load_user(user_id):
 @login_required 
 def index():
     return render_template('envios.html')
-
-# ... (tus otras rutas de API como /api/placas, /api/costos, etc. van aquí sin cambios) ...
 
 @app.route('/api/placas')
 @login_required 
@@ -131,14 +122,13 @@ def get_costos():
     conn.close()
     return jsonify(costos)
 
-# --- RUTA /api/envios TOTALMENTE MODIFICADA ---
+# --- RUTA /api/envios MODIFICADA ---
 @app.route('/api/envios')
 @login_required 
 def get_envios():
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        # ¡IMPORTANTE! Ordenamos por fecha descendente
-        # Asumimos que ya has ejecutado el ALTER TABLE
+        # Asumimos que las columnas 'estado_pago' y 'nro_operacion' ya existen
         cursor.execute(
             "SELECT * FROM envios WHERE destinatario = %s ORDER BY fecha DESC", 
             (current_user.email,)
@@ -146,49 +136,42 @@ def get_envios():
         envios = cursor.fetchall()
     conn.close()
 
-    # Agrupamos los envíos por mes
     grouped_envios = []
     current_month_key = None
     current_month_group = None
-
-    # Totales para el grupo actual
     total_mes = 0
     total_pagado = 0
 
     for i, envio in enumerate(envios):
-        # Asumimos que 'fecha' es un objeto date/datetime de la DB
         fecha_obj = envio['fecha']
-        
-        # Clave de agrupación: "YYYY-MM" (ej: "2025-10")
         month_key = fecha_obj.strftime("%Y-%m")
         
         if month_key != current_month_key:
-            # Si es un mes nuevo, guardamos el grupo anterior (si existe)
             if current_month_group is not None:
                 current_month_group['total_mes'] = total_mes
                 current_month_group['total_pagado'] = total_pagado
                 current_month_group['total_pendiente'] = total_mes - total_pagado
                 grouped_envios.append(current_month_group)
 
-            # Creamos un nuevo grupo
             current_month_key = month_key
             
-            # Nombre para mostrar: "Octubre 2025" (capitalizado)
-            month_name = fecha_obj.strftime("%B %Y").capitalize()
+            # 3. LÓGICA DE TRADUCCIÓN MANUAL
+            month_name_en = fecha_obj.strftime("%B")
+            year = fecha_obj.strftime("%Y")
+            # Buscamos en el diccionario, si no lo encuentra, usa el inglés
+            month_name_es = MESES_ESPANOL.get(month_name_en, month_name_en)
+            month_name = f"{month_name_es} {year}"
             
             current_month_group = {
                 "mes_key": current_month_key,
                 "mes_display": month_name,
                 "envios": []
             }
-            # Reseteamos los totales
             total_mes = 0
             total_pagado = 0
         
-        # Añadimos el envío al grupo del mes actual
         current_month_group["envios"].append(envio)
         
-        # Sumamos a los totales del mes
         costo_actual = envio.get('costo_total') or 0
         estado_actual = envio.get('estado_pago')
         
@@ -196,14 +179,12 @@ def get_envios():
         if estado_actual == 'Pagado':
             total_pagado += costo_actual
 
-    # No olvidar añadir el último grupo
     if current_month_group is not None:
         current_month_group['total_mes'] = total_mes
         current_month_group['total_pagado'] = total_pagado
         current_month_group['total_pendiente'] = total_mes - total_pagado
         grouped_envios.append(current_month_group)
 
-    # Devolvemos la lista de grupos (cada grupo contiene sus envíos y totales)
     return jsonify(grouped_envios)
 
 @app.route('/envios')
@@ -262,7 +243,7 @@ def logout():
     flash('Has cerrado sesión.', 'info')
     return redirect(url_for('login'))
 
-# --- RUTA DE REGISTRO DESHABILITADA ---
+# --- RUTA DE REGISTRO DESHABILITADA (Sin cambios) ---
 # La ruta /register está comentada con '#' para deshabilitarla.
 #
 # @app.route('/register', methods=['GET', 'POST'])
@@ -291,4 +272,3 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
-

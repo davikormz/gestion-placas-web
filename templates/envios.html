@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* Estilos generales (sin cambios) */
+        /* Estilos generales */
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #121212;
@@ -16,7 +16,7 @@
             padding: 0;
         }
 
-        /* Cabecera (sin cambios) */
+        /* Cabecera */
         .header {
             background: linear-gradient(135deg, #1e1e1e, #2c2c2c);
             color: #ffffff;
@@ -44,13 +44,13 @@
         }
 
         /* Contenedor principal */
-        .container-fluid { /* Usamos container-fluid para más espacio */
-            max-width: 1400px; /* Un poco más ancho para PC */
+        .container-fluid { 
+            max-width: 1400px; 
             margin: 0 auto;
             padding: 30px;
         }
 
-        /* Estilos de la tabla (ajustados para estar DENTRO del acordeón) */
+        /* Estilos de la tabla */
         .table {
             margin-bottom: 0;
             color: #e0e0e0;
@@ -72,7 +72,7 @@
             border-bottom: 1px solid #333;
             white-space: nowrap; 
         }
-        /* Celda de Asunto: Permitir que se rompa en varias líneas */
+        /* Celda de Asunto multilínea */
         .table th:nth-child(5),
         .table td:nth-child(5) {
             white-space: normal; 
@@ -80,7 +80,6 @@
             min-width: 250px; 
             text-align: left; 
         }
-        
         .table-striped tbody tr:nth-of-type(odd) {
             background-color: #4b4b4b;
         }
@@ -100,17 +99,14 @@
             background-color: #444444;
             transition: background-color 0.3s ease;
         }
-
-
-        /* Títulos de sección */
+        
+        /* Títulos y helpers */
         .section-title {
             font-size: 1.75rem;
             font-weight: 600;
             color: #ffffff;
             margin-bottom: 20px;
         }
-
-        /* Alineación y helpers (sin cambios) */
         .text-center { text-align: center; }
         .text-danger { color: #ff5252; font-weight: 500; }
         .card {
@@ -119,7 +115,7 @@
              border-radius: 16px;
         }
 
-        /* --- ESTILOS DE ACORDEÓN DARK MODE (Actualizados) --- */
+        /* --- ESTILOS DE ACORDEÓN DARK MODE --- */
         .accordion-item {
             background-color: #1e1e1e; 
             border: 1px solid #333; 
@@ -137,7 +133,6 @@
             font-weight: 600;
             border: none;
             box-shadow: none; 
-            /* Flexbox para alinear nombre y totales */
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -153,49 +148,65 @@
         /* Flecha del acordeón */
         .accordion-button::after {
             filter: invert(1) grayscale(100%) brightness(200%);
+            flex-shrink: 0;
         }
         .accordion-button:not(.collapsed)::after {
              filter: invert(79%) sepia(61%) saturate(1433%) hue-rotate(359deg) brightness(102%) contrast(105%);
-             /* Ocultamos la flecha por defecto y la mostramos solo en el botón */
-             flex-shrink: 0; /* Evita que la flecha se encoja */
+             flex-shrink: 0; 
         }
-        
         .accordion-body {
             background-color: #1e1e1e; 
             padding: 0; 
         }
 
-        /* --- NUEVOS ESTILOS PARA RESUMEN DE PAGO Y ESTADO --- */
+        /* --- CSS MODIFICADO PARA UN DISEÑO MÁS LIMPIO --- */
         
         /* Contenedor para los totales en el botón */
         .accordion-button-summary {
             font-size: 1rem;
             font-weight: 400;
             text-align: right;
-            margin-left: 1rem; /* Espacio entre el nombre y los totales */
-            flex-shrink: 0; /* Evita que los totales se encojan */
+            margin-left: 1rem; 
+            flex-shrink: 0; 
+            
+            /* Usamos Flexbox para alinear los totales horizontalmente */
+            display: flex;
+            flex-wrap: wrap; /* Permitir que se apilen si no caben */
+            gap: 10px 20px; /* 10px de espacio vertical, 20px horizontal */
+            justify-content: flex-end; /* Alinearlos a la derecha */
         }
+        
+        /* Cada item del resumen (Total, Pagado, Pendiente) */
         .summary-item {
-            display: block; /* Un total por línea */
             line-height: 1.4;
-            font-weight: 600;
+            font-weight: 400; /* Etiqueta ligera */
+            font-size: 0.95rem;
+            color: #ccc; /* Etiqueta suave */
         }
-        .summary-item.total {
+
+        /* El número (el valor en S/) */
+        .summary-item strong {
+            font-weight: 700; /* Número grueso */
+            margin-left: 5px; /* Espacio entre etiqueta y número */
+        }
+        
+        /* Colores específicos para cada número */
+        .summary-item.total strong {
             color: #ffffff;
-            font-size: 1.1rem;
         }
-        .summary-item.pagado {
-            color: #28a745; /* Verde Bootstrap */
+        .summary-item.pagado strong {
+            color: #28a745; /* Verde */
         }
-        .summary-item.pendiente {
-            color: #fd7e14; /* Naranja Bootstrap */
+        .summary-item.pendiente strong {
+            color: #fd7e14; /* Naranja */
         }
+
 
         /* Estilos para la celda de Estado en la tabla */
         .status-pagado {
             color: #28a745;
             font-weight: 600;
-            display: block; /* "Pagado" en una línea */
+            display: block; 
         }
         .status-pendiente {
             color: #fd7e14;
@@ -204,21 +215,25 @@
         .nro-operacion {
             font-size: 0.85em;
             color: #999;
-            display: block; /* Nro de operación debajo */
+            display: block; 
             line-height: 1;
         }
         
-        /* Ajuste responsivo para el botón del acordeón en móviles */
+        /* --- CSS MODIFICADO PARA MÓVILES --- */
         @media (max-width: 768px) {
             .accordion-button {
                 flex-direction: column; /* Apilar nombre y totales */
                 align-items: flex-start; /* Alinear a la izquierda */
             }
             .accordion-button-summary {
+                /* Hacemos que los totales se apilen verticalmente */
+                flex-direction: column;
+                align-items: flex-start; /* Alinear a la izquierda */
                 text-align: left;
                 margin-left: 0;
                 margin-top: 10px; /* Espacio entre nombre y totales */
                 font-size: 0.9rem;
+                gap: 5px; /* Espacio vertical más pequeño */
             }
             .accordion-button::after {
                  /* Mover la flecha a la esquina superior derecha */
@@ -230,7 +245,7 @@
         /* --------------------------------------------------- */
 
 
-        /* Media query para móviles (header - sin cambios) */
+        /* Media query para móviles (header) */
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -250,7 +265,7 @@
     </style>
 </head>
 <body>
-    <!-- Cabecera con logo y bloque de logout (sin cambios) -->
+    <!-- Cabecera con logo y bloque de logout -->
     <div class="header">
         <img src="/static/img/logo_negro_y_blanco.png" alt="Logo Amilgraf">
         <div>
@@ -306,7 +321,7 @@
             });
 
             try {
-                // 1. Cargar envíos (la API ahora devuelve datos agrupados y totales)
+                // 1. Cargar envíos
                 const enviosResponse = await fetch('/api/envios');
                 if (!enviosResponse.ok) {
                     if (enviosResponse.status === 401) {
@@ -317,7 +332,7 @@
                 }
                 const groupedEnvios = await enviosResponse.json();
 
-                // Limpiar el contenedor (quitar "Cargando...")
+                // Limpiar el contenedor
                 container.innerHTML = '';
 
                 // 2. Verificar si hay envíos
@@ -400,7 +415,7 @@
                     const isCollapsed = index === 0 ? '' : 'collapsed';
                     const isExpanded = index === 0 ? 'true' : 'false';
 
-                    // --- HTML del Botón (HEADER) actualizado con totales ---
+                    // --- HTML DEL BOTÓN (HEADER) ACTUALIZADO ---
                     const buttonHtml = `
                         <h2 class="accordion-header" id="heading-${monthKey}">
                             <button class="accordion-button ${isCollapsed}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${monthKey}" aria-expanded="${isExpanded}" aria-controls="collapse-${monthKey}">
@@ -413,16 +428,16 @@
                                 
                                 <!-- Lado Derecho: Resumen de Pagos -->
                                 <div class="accordion-button-summary">
-                                    <span class="summary-item total">Total: ${totalMes}</span>
-                                    <span class="summary-item pagado">Pagado: ${totalPagado}</span>
-                                    <span class="summary-item pendiente">Pendiente: ${totalPendiente}</span>
+                                    <span class="summary-item total">Total: <strong>${totalMes}</strong></span>
+                                    <span class="summary-item pagado">Pagado: <strong>${totalPagado}</strong></span>
+                                    <span class="summary-item pendiente">Pendiente: <strong>${totalPendiente}</strong></span>
                                 </div>
 
                             </button>
                         </h2>
                     `;
 
-                    // --- HTML del Cuerpo (BODY) actualizado con nueva columna ---
+                    // --- HTML del Cuerpo (BODY) actualizado ---
                     const bodyHtml = `
                         <div id="collapse-${monthKey}" class="accordion-collapse collapse ${isShow}" aria-labelledby="heading-${monthKey}" data-bs-parent="#enviosAccordion">
                             <div class="accordion-body">
