@@ -63,9 +63,6 @@ def index():
 def get_placas():
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        # ---- MODIFICADO ----
-        # Filtramos por el email del usuario logueado
-        # (Asumiendo que 'placas' también tiene una columna 'destinatario')
         cursor.execute("SELECT * FROM placas WHERE destinatario = %s", (current_user.email,))
         placas = cursor.fetchall()
     conn.close()
@@ -76,12 +73,8 @@ def get_placas():
 def get_placas_con_costos():
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        # ---- MODIFICADO ----
-        # Filtramos 'placas' por el email del usuario logueado
         cursor.execute("SELECT * FROM placas WHERE destinatario = %s", (current_user.email,))
         placas = cursor.fetchall()
-        
-        # 'costos' parece ser una tabla genérica, así que la traemos completa
         cursor.execute("SELECT * FROM costos")
         costos = cursor.fetchall()
     conn.close()
@@ -115,7 +108,7 @@ def get_placas_con_costos():
 def get_costos():
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM costos") # Esta tabla es genérica, sin filtro
+        cursor.execute("SELECT * FROM costos") 
         costos = cursor.fetchall()
     conn.close()
     return jsonify(costos)
@@ -125,9 +118,6 @@ def get_costos():
 def get_envios():
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        # ---- MODIFICADO ----
-        # ¡Esta es la modificación clave para 'envios.html'!
-        # Solo trae los envíos cuyo 'destinatario' es el email del usuario logueado
         cursor.execute("SELECT * FROM envios WHERE destinatario = %s", (current_user.email,))
         envios = cursor.fetchall()
     conn.close()
@@ -143,7 +133,7 @@ def envios_page():
 def get_papeles():
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM papeles") # Esta tabla es genérica, sin filtro
+        cursor.execute("SELECT * FROM papeles") 
         papeles = cursor.fetchall()
     conn.close()
     return jsonify(papeles)
@@ -190,38 +180,29 @@ def logout():
     return redirect(url_for('login'))
 
 # --- RUTA DE REGISTRO DESHABILITADA ---
-# Se comenta para que nadie pueda registrarse.
-# Para registrar un nuevo proveedor, descomenta temporalmente esta ruta,
-# registra al usuario desde la web y vuelve a comentarla.
+# La ruta /register está comentada con '#' para deshabilitarla.
 #
 # @app.route('/register', methods=['GET', 'POST'])
 # def register():
 #     if current_user.is_authenticated:
 #         return redirect(url_for('envios_page'))
-
 #     if request.method == 'POST':
 #         email = request.form['email']
 #         password = request.form['password']
-        
 #         conn = get_db_connection()
 #         with conn.cursor() as cursor:
 #             cursor.execute("SELECT * FROM proveedores WHERE email = %s", (email,))
 #             existing_user = cursor.fetchone()
-            
 #             if existing_user:
 #                 flash('Ese email ya está registrado. Por favor, inicia sesión.', 'warning')
 #                 return redirect(url_for('login'))
-            
 #             hashed_password = generate_password_hash(password)
 #             cursor.execute("INSERT INTO proveedores (email, password_hash) VALUES (%s, %s)",
 #                            (email, hashed_password))
 #             conn.commit() 
-            
 #         conn.close()
-        
 #         flash('¡Registro exitoso! Ahora puedes iniciar sesión.', 'success')
 #         return redirect(url_for('login'))
-
 #     return render_template('register.html')
 
 
