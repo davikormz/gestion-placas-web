@@ -382,10 +382,8 @@
         });
 
         // --- FUNCIÓN loadEnvios (ACTUALIZADA) ---
-        // Ahora acepta un parámetro para el filtro
         async function loadEnvios(filtroProveedor = 'default') {
             const container = document.getElementById('accordion-container');
-            // Mostramos "Cargando..." cada vez que se llama
             container.innerHTML = `
                 <div class="card">
                     <div class="card-body text-center" id="accordion-loading-message">
@@ -393,29 +391,20 @@
                     </div>
                 </div>`;
             
-            // ########## LA CORRECCIÓN ESTÁ AQUÍ ##########
-            // Esta línea estaba comentada en el archivo que subiste.
-            // La descomentamos para que la variable 'searchInput' exista.
             const searchInput = document.getElementById('search-input');
-            // ############################################
-
             const noResultsMsg = document.getElementById('no-results-message');
             
-            if (searchInput) searchInput.value = ''; // Esta línea ahora funciona
+            if (searchInput) searchInput.value = '';
             if (noResultsMsg) noResultsMsg.style.display = 'none';
 
             
             let apiUrl = '/api/envios';
 
-            // 3. CONSTRUIMOS LA URL DE LA API BASADO EN EL ROL Y EL FILTRO
             if (currentUserRole === 'admin') {
-                // Si es admin, añadimos el parámetro
                 apiUrl = `/api/envios?proveedor=${filtroProveedor}`;
             }
-            // Si es 'proveedor', no añadimos nada, la API ya sabe qué hacer
 
             try {
-                // 1. Cargar envíos
                 const enviosResponse = await fetch(apiUrl);
                 if (!enviosResponse.ok) {
                     if (enviosResponse.status === 401) {
@@ -431,7 +420,6 @@
 
                 container.innerHTML = '';
 
-                // 2. Verificar si hay envíos
                 if (groupedEnvios.length === 0) {
                     let mensaje = 'No se encontraron envíos registrados.';
                     if (currentUserRole === 'admin' && filtroProveedor !== 'default') {
@@ -450,7 +438,6 @@
                 accordionWrapper.className = 'accordion';
                 accordionWrapper.id = 'enviosAccordion';
 
-                // 4. Iterar sobre cada GRUPO (cada mes)
                 groupedEnvios.forEach((group, index) => {
                     const monthKey = group.mes_key; 
                     const monthDisplay = group.mes_display; 
@@ -460,7 +447,6 @@
                     const totalPagado = currencyFormatter.format(group.total_pagado || 0);
                     const totalPendiente = currencyFormatter.format(group.total_pendiente || 0);
 
-                    // 5. Crear el HTML de las FILAS (<tr>) para la tabla de este mes
                     const tableRows = envios.map(envio => {
                         const tamanoFormateado = envio.tamano;
                         const fechaFormateada = new Date(envio.fecha).toLocaleDateString('es-ES', {
@@ -470,7 +456,7 @@
                         });
                         const costoFormateado = currencyFormatter.format(envio.costo_total || 0);
 
-                        const estado = envio.estado_pago || 'Pendiente';
+                        const estado = envio.estado_pagado || 'Pendiente';
                         const operacion = envio.nro_operacion;
                         let estadoHtml = '';
 
@@ -502,7 +488,6 @@
                         `;
                     }).join(''); 
 
-                    // 6. Crear el HTML del 'Accordion Item' completo
                     const accordionItem = document.createElement('div');
                     accordionItem.className = 'accordion-item';
                     
@@ -510,7 +495,6 @@
                     const isCollapsed = index === 0 ? '' : 'collapsed';
                     const isExpanded = index === 0 ? 'true' : 'false';
 
-                    // HTML DEL BOTÓN (HEADER)
                     const buttonHtml = `
                         <h2 class="accordion-header" id="heading-${monthKey}">
                             <button class="accordion-button ${isCollapsed}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${monthKey}" aria-expanded="${isExpanded}" aria-controls="collapse-${monthKey}">
@@ -568,14 +552,14 @@
             }
         }
 
-        // --- 4. FUNCIÓN PARA CARGAR EL FILTRO DE ADMIN ---
+        // --- FUNCIÓN PARA CARGAR EL FILTRO DE ADMIN ---
         async function loadAdminFilter() {
             if (currentUserRole !== 'admin') {
-                return; // Si no es admin, no hace nada
+                return;
             }
 
             const selectFilter = document.getElementById('admin-proveedor-filter');
-            if (!selectFilter) return; // Salir si el filtro no existe
+            if (!selectFilter) return;
 
             try {
                 const response = await fetch('/api/admin/lista_proveedores');
@@ -584,13 +568,11 @@
                 }
                 const proveedoresEmails = await response.json();
 
-                // Añadir un separador
                 const separator = document.createElement('option');
                 separator.disabled = true;
                 separator.innerHTML = '--- Proveedores ---';
                 selectFilter.appendChild(separator);
 
-                // Poblar la lista
                 proveedoresEmails.forEach(email => {
                     const option = document.createElement('option');
                     option.value = email;
@@ -600,11 +582,10 @@
 
             } catch (error) {
                 console.error(error);
-                // Opcional: mostrar un error
             }
         }
         
-        // --- 5. NUEVA FUNCIÓN: CONFIGURAR EL FILTRO DE BÚSQUEDA ---
+        // --- 5. FUNCIÓN DE BÚSQUEDA (ACTUALIZADA CON MANEJO DE ACORDEÓN) ---
         function setupSearchFilter() {
             const searchInput = document.getElementById('search-input');
             const noResultsMessage = document.getElementById('no-results-message');
@@ -616,18 +597,43 @@
                 const searchTerm = searchInput.value.toLowerCase();
                 let totalMatchesFound = 0;
                 
-                // Ocultamos el mensaje de "cargando" si aún estuviera visible
                 const loadingMsg = document.getElementById('accordion-loading-message');
                 if (loadingMsg) loadingMsg.style.display = 'none';
 
-                // 1. Iterar sobre cada item de acordeón (cada mes)
                 const accordionItems = accordionContainer.querySelectorAll('.accordion-item');
-                
+
+                // --- CASO 1: El buscador está vacío (se borró la búsqueda) ---
+                if (searchTerm.length === 0) {
+                    accordionItems.forEach((item, index) => {
+                        // 1. Mostrar el item de acordeón
+                        item.style.display = ''; 
+
+                        // 2. Mostrar todas las filas dentro de él
+                        item.querySelectorAll('tbody tr').forEach(row => {
+                            row.style.display = '';
+                        });
+
+                        // 3. Restaurar estado colapsado (solo el primero abierto)
+                        const collapseElement = item.querySelector('.accordion-collapse');
+                        if (collapseElement) {
+                            // Obtenemos la instancia de Bootstrap para este acordeón
+                            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseElement);
+                            if (index === 0) {
+                                bsCollapse.show(); // Abrir el primero
+                            } else {
+                                bsCollapse.hide(); // Cerrar los demás
+                            }
+                        }
+                    });
+                    noResultsMessage.style.display = 'none'; // Ocultar mensaje de no resultados
+                    return; // Salir de la función
+                }
+
+                // --- CASO 2: Hay un término de búsqueda, filtramos ---
                 accordionItems.forEach(item => {
                     let itemHasVisibleRows = false;
                     const rows = item.querySelectorAll('tbody tr');
 
-                    // 2. Iterar sobre cada fila (<tr>) dentro del item
                     rows.forEach(row => {
                         const rowText = row.textContent.toLowerCase();
                         if (rowText.includes(searchTerm)) {
@@ -642,6 +648,16 @@
                     if (itemHasVisibleRows) {
                         item.style.display = ''; // Mostrar mes
                         totalMatchesFound++;
+                        
+                        // --- ¡AQUÍ LA MAGIA! ---
+                        // Forzamos a que el acordeón se expanda para mostrar el resultado
+                        const collapseElement = item.querySelector('.accordion-collapse');
+                        if (collapseElement) {
+                            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseElement);
+                            bsCollapse.show(); // Forzar expansión
+                        }
+                        // ------------------------
+
                     } else {
                         item.style.display = 'none'; // Ocultar mes
                     }
@@ -657,21 +673,17 @@
         }
 
 
-        // --- 6. INICIALIZACIÓN DE LA PÁGINA (Actualizado) ---
+        // --- 6. INICIALIZACIÓN DE LA PÁGINA (Sin cambios) ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Carga inicial de envíos (con el filtro por defecto)
             loadEnvios('default');
             
-            // Configuramos el listener del buscador
-            setupSearchFilter();
+            setupSearchFilter(); // Esta función ahora es más inteligente
 
-            // Si es admin, carga el filtro Y añade el listener
             if (currentUserRole === 'admin') {
-                loadAdminFilter(); // Carga la lista de proveedores en el <select>
+                loadAdminFilter();
 
                 const selectFilter = document.getElementById('admin-proveedor-filter');
                 if (selectFilter) {
-                    // Cuando el admin cambia el filtro, recargamos los envíos
                     selectFilter.addEventListener('change', (e) => {
                         const nuevoFiltro = e.target.value;
                         loadEnvios(nuevoFiltro);
