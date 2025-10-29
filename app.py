@@ -1,11 +1,27 @@
 import os
 import pymysql
+# Importamos 'locale' para obtener los nombres de los meses en español
+import locale
 # importaciones para login y seguridad
 from flask import Flask, render_template, jsonify, request, flash, redirect, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+
+# --- Configuración de Locale para español ---
+# Esto es para que .strftime('%B') devuelva "Octubre" en lugar de "October"
+# Se intenta con configuraciones comunes para Linux y Windows.
+try:
+    # Para sistemas basados en UNIX (como Render)
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+except locale.Error:
+    try:
+        # Para Windows
+        locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252')
+    except locale.Error:
+        print("Advertencia: No se pudo establecer el 'locale' a español. Los meses podrían aparecer en inglés.")
+
 
 # --- Clave Secreta ---
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave-secreta-para-desarrollo-local')
@@ -113,15 +129,52 @@ def get_costos():
     conn.close()
     return jsonify(costos)
 
+# --- RUTA /api/envios MODIFICADA ---
 @app.route('/api/envios')
 @login_required 
 def get_envios():
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM envios WHERE destinatario = %s", (current_user.email,))
+        # ¡IMPORTANTE! Ordenamos por fecha descendente para que los meses más nuevos aparezcan primero.
+        cursor.execute(
+            "SELECT * FROM envios WHERE destinatario = %s ORDER BY fecha DESC", 
+            (current_user.email,)
+        )
         envios = cursor.fetchall()
     conn.close()
-    return jsonify(envios)
+
+    # Agrupamos los envíos por mes
+    grouped_envios = []
+    current_month_key = None
+    current_month_group = None
+
+    for envio in envios:
+        # Asumimos que 'fecha' es un objeto date/datetime de la DB
+        fecha_obj = envio['fecha']
+        
+        # Clave de agrupación: "YYYY-MM" (ej: "2025-10")
+        month_key = fecha_obj.strftime("%Y-%m")
+        
+        if month_key != current_month_key:
+            # Si es un mes nuevo, creamos un nuevo grupo
+            current_month_key = month_key
+            
+            # Nombre para mostrar: "Octubre 2025"
+            # .capitalize() asegura que la primera letra sea mayúscula
+            month_name = fecha_obj.strftime("%B %Y").capitalize()
+            
+            current_month_group = {
+                "mes_key": current_month_key,
+                "mes_display": month_name,
+                "envios": []
+            }
+            grouped_envios.append(current_month_group)
+        
+        # Añadimos el envío al grupo del mes actual
+        current_month_group["envios"].append(envio)
+
+    # Devolvemos la lista de grupos (cada grupo contiene sus envíos)
+    return jsonify(grouped_envios)
 
 @app.route('/envios')
 @login_required 
@@ -143,7 +196,7 @@ def get_papeles():
 def cotizacion_page():
     return render_template('cotizacion.html')
 
-# --- NUEVAS RUTAS DE AUTENTICACIÓN ---
+# --- RUTAS DE AUTENTICACIÓN (Sin cambios) ---
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
