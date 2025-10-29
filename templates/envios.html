@@ -393,9 +393,15 @@
                     </div>
                 </div>`;
             
-            // const searchInput = document.getElementById('search-input');
+            // ########## LA CORRECCIÓN ESTÁ AQUÍ ##########
+            // Esta línea estaba comentada en el archivo que subiste.
+            // La descomentamos para que la variable 'searchInput' exista.
+            const searchInput = document.getElementById('search-input');
+            // ############################################
+
             const noResultsMsg = document.getElementById('no-results-message');
-            if (searchInput) searchInput.value = '';
+            
+            if (searchInput) searchInput.value = ''; // Esta línea ahora funciona
             if (noResultsMsg) noResultsMsg.style.display = 'none';
 
             
