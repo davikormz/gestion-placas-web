@@ -189,7 +189,7 @@ def logout():
     flash('Has cerrado sesión.', 'info')
     return redirect(url_for('login'))
 
-@app.route('/register', methods=['GET', 'POST'])
+""" @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('envios_page'))
@@ -217,7 +217,7 @@ def register():
         flash('¡Registro exitoso! Ahora puedes iniciar sesión.', 'success')
         return redirect(url_for('login'))
 
-    return render_template('register.html')
+    return render_template('register.html') """
 
 
 if __name__ == '__main__':
