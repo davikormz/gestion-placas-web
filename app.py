@@ -1,6 +1,6 @@
 import os
 import pymysql
-# Importamos 'locale' para obtener los nombres de los meses en español
+# 1. IMPORTAMOS LOCALE para meses en español
 import locale
 # importaciones para login y seguridad
 from flask import Flask, render_template, jsonify, request, flash, redirect, url_for
@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-# --- Configuración de Locale para español ---
+# 2. CONFIGURAMOS LOCALE para español
 # Esto es para que .strftime('%B') devuelva "Octubre" en lugar de "October"
 # Se intenta con configuraciones comunes para Linux y Windows.
 try:
@@ -74,6 +74,8 @@ def load_user(user_id):
 def index():
     return render_template('envios.html')
 
+# ... (tus otras rutas de API como /api/placas, /api/costos, etc. van aquí sin cambios) ...
+
 @app.route('/api/placas')
 @login_required 
 def get_placas():
@@ -129,13 +131,14 @@ def get_costos():
     conn.close()
     return jsonify(costos)
 
-# --- RUTA /api/envios MODIFICADA ---
+# --- RUTA /api/envios TOTALMENTE MODIFICADA ---
 @app.route('/api/envios')
 @login_required 
 def get_envios():
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        # ¡IMPORTANTE! Ordenamos por fecha descendente para que los meses más nuevos aparezcan primero.
+        # ¡IMPORTANTE! Ordenamos por fecha descendente
+        # Asumimos que ya has ejecutado el ALTER TABLE
         cursor.execute(
             "SELECT * FROM envios WHERE destinatario = %s ORDER BY fecha DESC", 
             (current_user.email,)
@@ -148,7 +151,11 @@ def get_envios():
     current_month_key = None
     current_month_group = None
 
-    for envio in envios:
+    # Totales para el grupo actual
+    total_mes = 0
+    total_pagado = 0
+
+    for i, envio in enumerate(envios):
         # Asumimos que 'fecha' es un objeto date/datetime de la DB
         fecha_obj = envio['fecha']
         
@@ -156,11 +163,17 @@ def get_envios():
         month_key = fecha_obj.strftime("%Y-%m")
         
         if month_key != current_month_key:
-            # Si es un mes nuevo, creamos un nuevo grupo
+            # Si es un mes nuevo, guardamos el grupo anterior (si existe)
+            if current_month_group is not None:
+                current_month_group['total_mes'] = total_mes
+                current_month_group['total_pagado'] = total_pagado
+                current_month_group['total_pendiente'] = total_mes - total_pagado
+                grouped_envios.append(current_month_group)
+
+            # Creamos un nuevo grupo
             current_month_key = month_key
             
-            # Nombre para mostrar: "Octubre 2025"
-            # .capitalize() asegura que la primera letra sea mayúscula
+            # Nombre para mostrar: "Octubre 2025" (capitalizado)
             month_name = fecha_obj.strftime("%B %Y").capitalize()
             
             current_month_group = {
@@ -168,12 +181,29 @@ def get_envios():
                 "mes_display": month_name,
                 "envios": []
             }
-            grouped_envios.append(current_month_group)
+            # Reseteamos los totales
+            total_mes = 0
+            total_pagado = 0
         
         # Añadimos el envío al grupo del mes actual
         current_month_group["envios"].append(envio)
+        
+        # Sumamos a los totales del mes
+        costo_actual = envio.get('costo_total') or 0
+        estado_actual = envio.get('estado_pago')
+        
+        total_mes += costo_actual
+        if estado_actual == 'Pagado':
+            total_pagado += costo_actual
 
-    # Devolvemos la lista de grupos (cada grupo contiene sus envíos)
+    # No olvidar añadir el último grupo
+    if current_month_group is not None:
+        current_month_group['total_mes'] = total_mes
+        current_month_group['total_pagado'] = total_pagado
+        current_month_group['total_pendiente'] = total_mes - total_pagado
+        grouped_envios.append(current_month_group)
+
+    # Devolvemos la lista de grupos (cada grupo contiene sus envíos y totales)
     return jsonify(grouped_envios)
 
 @app.route('/envios')

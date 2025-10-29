@@ -54,8 +54,7 @@
         .table {
             margin-bottom: 0;
             color: #e0e0e0;
-            width: 100%; /* La tabla debe ser responsive */
-            /* ¡Ya no usamos table-layout: fixed ni min-width! */
+            width: 100%;
         }
         .table th {
             background-color: #2c2c2c;
@@ -64,22 +63,22 @@
             text-align: center;
             padding: 8px;
             border: none;
-            white-space: nowrap; /* Encabezados en una línea */
+            white-space: nowrap; 
         }
         .table td {
             padding: 8px;
             text-align: center;
             vertical-align: middle;
             border-bottom: 1px solid #333;
-            white-space: nowrap; /* Celdas en una línea por defecto */
+            white-space: nowrap; 
         }
         /* Celda de Asunto: Permitir que se rompa en varias líneas */
         .table th:nth-child(5),
         .table td:nth-child(5) {
-            white-space: normal; /* Permitir wrap */
-            word-break: break-word; /* Romper palabras largas */
-            min-width: 250px; /* Darle un ancho mínimo */
-            text-align: left; /* Alinear a la izquierda para mejor lectura */
+            white-space: normal; 
+            word-break: break-word; 
+            min-width: 250px; 
+            text-align: left; 
         }
         
         .table-striped tbody tr:nth-of-type(odd) {
@@ -120,52 +119,118 @@
              border-radius: 16px;
         }
 
-        /* --- NUEVOS ESTILOS PARA EL ACORDEÓN DARK MODE --- */
+        /* --- ESTILOS DE ACORDEÓN DARK MODE (Actualizados) --- */
         .accordion-item {
-            background-color: #1e1e1e; /* Fondo del item */
-            border: 1px solid #333; /* Borde sutil */
+            background-color: #1e1e1e; 
+            border: 1px solid #333; 
             margin-bottom: 10px;
-            border-radius: 12px; /* Bordes redondeados */
-            overflow: hidden; /* Para que el borde redondeado funcione */
+            border-radius: 12px; 
+            overflow: hidden; 
         }
         .accordion-header {
             border-bottom: none;
         }
         .accordion-button {
-            background-color: #2c2c2c; /* Fondo del botón (mes) */
-            color: #ffffff; /* Texto del botón */
+            background-color: #2c2c2c; 
+            color: #ffffff; 
             font-size: 1.2rem;
             font-weight: 600;
             border: none;
-            box-shadow: none; /* Quitar sombra de Bootstrap */
+            box-shadow: none; 
+            /* Flexbox para alinear nombre y totales */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
         }
-        /* Estilo del botón cuando está colapsado (cerrado) */
         .accordion-button.collapsed {
              background-color: #2c2c2c;
         }
-        /* Estilo del botón cuando está expandido (abierto) */
         .accordion-button:not(.collapsed) {
-            background-color: #3a3a3a; /* Un poco más claro al abrir */
-            color: #FFC107; /* Color ámbar al estar activo */
+            background-color: #3a3a3a; 
+            color: #FFC107; 
         }
-        /* Flecha del acordeón (Bootstrap usa un SVG) */
+        /* Flecha del acordeón */
         .accordion-button::after {
-            /* Filtro para cambiar el color del icono SVG de Bootstrap a blanco */
             filter: invert(1) grayscale(100%) brightness(200%);
         }
         .accordion-button:not(.collapsed)::after {
-            /* Filtro para cambiar el icono a color ámbar cuando está abierto */
              filter: invert(79%) sepia(61%) saturate(1433%) hue-rotate(359deg) brightness(102%) contrast(105%);
+             /* Ocultamos la flecha por defecto y la mostramos solo en el botón */
+             flex-shrink: 0; /* Evita que la flecha se encoja */
         }
         
         .accordion-body {
-            background-color: #1e1e1e; /* Fondo del contenido (la tabla) */
-            padding: 0; /* Quitamos padding para que la tabla ocupe todo */
+            background-color: #1e1e1e; 
+            padding: 0; 
+        }
+
+        /* --- NUEVOS ESTILOS PARA RESUMEN DE PAGO Y ESTADO --- */
+        
+        /* Contenedor para los totales en el botón */
+        .accordion-button-summary {
+            font-size: 1rem;
+            font-weight: 400;
+            text-align: right;
+            margin-left: 1rem; /* Espacio entre el nombre y los totales */
+            flex-shrink: 0; /* Evita que los totales se encojan */
+        }
+        .summary-item {
+            display: block; /* Un total por línea */
+            line-height: 1.4;
+            font-weight: 600;
+        }
+        .summary-item.total {
+            color: #ffffff;
+            font-size: 1.1rem;
+        }
+        .summary-item.pagado {
+            color: #28a745; /* Verde Bootstrap */
+        }
+        .summary-item.pendiente {
+            color: #fd7e14; /* Naranja Bootstrap */
+        }
+
+        /* Estilos para la celda de Estado en la tabla */
+        .status-pagado {
+            color: #28a745;
+            font-weight: 600;
+            display: block; /* "Pagado" en una línea */
+        }
+        .status-pendiente {
+            color: #fd7e14;
+            font-weight: 600;
+        }
+        .nro-operacion {
+            font-size: 0.85em;
+            color: #999;
+            display: block; /* Nro de operación debajo */
+            line-height: 1;
+        }
+        
+        /* Ajuste responsivo para el botón del acordeón en móviles */
+        @media (max-width: 768px) {
+            .accordion-button {
+                flex-direction: column; /* Apilar nombre y totales */
+                align-items: flex-start; /* Alinear a la izquierda */
+            }
+            .accordion-button-summary {
+                text-align: left;
+                margin-left: 0;
+                margin-top: 10px; /* Espacio entre nombre y totales */
+                font-size: 0.9rem;
+            }
+            .accordion-button::after {
+                 /* Mover la flecha a la esquina superior derecha */
+                position: absolute;
+                top: 15px;
+                right: 15px;
+            }
         }
         /* --------------------------------------------------- */
 
 
-        /* Media query para móviles (sin cambios) */
+        /* Media query para móviles (header - sin cambios) */
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -174,6 +239,12 @@
             .header img {
                 margin-right: 0;
                 margin-bottom: 10px;
+            }
+            
+            /* (Ajuste para el bloque de logout) */
+            .header div[style*="margin-left: auto"] {
+                margin: 15px 0 0 0 !important;
+                text-align: center !important;
             }
         }
     </style>
@@ -208,12 +279,9 @@
 
         <!--
             CONTENEDOR DEL ACORDEÓN
-            Ya no tenemos una <div class="card"> o <table> aquí.
-            El JavaScript construirá el acordeón dentro de este div.
         -->
         <div id="accordion-container">
             <!-- El contenido se cargará dinámicamente -->
-            <!-- Mostramos un indicador de carga inicial -->
             <div class="card">
                 <div class="card-body text-center">
                     Cargando envíos...
@@ -230,12 +298,19 @@
         async function loadEnvios() {
             const container = document.getElementById('accordion-container');
             
+            // Formateador de moneda (Soles Peruanos)
+            const currencyFormatter = new Intl.NumberFormat('es-PE', {
+                style: 'currency',
+                currency: 'PEN',
+                minimumFractionDigits: 2
+            });
+
             try {
-                // 1. Cargar envíos (la API ahora devuelve datos agrupados)
+                // 1. Cargar envíos (la API ahora devuelve datos agrupados y totales)
                 const enviosResponse = await fetch('/api/envios');
                 if (!enviosResponse.ok) {
                     if (enviosResponse.status === 401) {
-                        window.location.href = '/login'; // Redirigir si no está autorizado
+                        window.location.href = '/login'; 
                         return;
                     }
                     throw new Error('Error en la respuesta de la API: ' + enviosResponse.status);
@@ -263,9 +338,14 @@
 
                 // 4. Iterar sobre cada GRUPO (cada mes)
                 groupedEnvios.forEach((group, index) => {
-                    const monthKey = group.mes_key; // ej: "2025-10"
-                    const monthDisplay = group.mes_display; // ej: "Octubre 2025"
-                    const envios = group.envios; // Array de envíos de ese mes
+                    const monthKey = group.mes_key; 
+                    const monthDisplay = group.mes_display; 
+                    const envios = group.envios; 
+
+                    // Formatear los nuevos totales
+                    const totalMes = currencyFormatter.format(group.total_mes || 0);
+                    const totalPagado = currencyFormatter.format(group.total_pagado || 0);
+                    const totalPendiente = currencyFormatter.format(group.total_pendiente || 0);
 
                     // 5. Crear el HTML de las FILAS (<tr>) para la tabla de este mes
                     const tableRows = envios.map(envio => {
@@ -275,9 +355,24 @@
                             month: '2-digit',
                             day: '2-digit'
                         });
+                        const costoFormateado = currencyFormatter.format(envio.costo_total || 0);
+
+                        // --- Lógica para la celda de Estado ---
+                        const estado = envio.estado_pago || 'Pendiente';
+                        const operacion = envio.nro_operacion;
+                        let estadoHtml = '';
+
+                        if (estado === 'Pagado') {
+                            estadoHtml = `<span class="status-pagado">Pagado</span>`;
+                            if (operacion) {
+                                // Añadimos el Nro de Op. si existe
+                                estadoHtml += `<span class="nro-operacion">(${operacion})</span>`;
+                            }
+                        } else {
+                            estadoHtml = `<span class="status-pendiente">Pendiente</span>`;
+                        }
+                        // ----------------------------------------
                         
-                        // Definimos la celda de Asunto con estilos inline
-                        // para permitir el 'wrap' (multilínea) y mejorar la legibilidad.
                         const asuntoCell = `
                             <td style="white-space: normal; word-break: break-word; text-align: left; min-width: 250px;">
                                 ${envio.asunto || 'Sin asunto'}
@@ -291,7 +386,8 @@
                                 <td>${envio.destinatario}</td>
                                 ${asuntoCell}
                                 <td>${fechaFormateada}</td>
-                                <td>${envio.costo_total}</td>
+                                <td>${costoFormateado}</td>
+                                <td>${estadoHtml}</td> 
                             </tr>
                         `;
                     }).join(''); // Unimos todas las filas en un solo string
@@ -300,19 +396,34 @@
                     const accordionItem = document.createElement('div');
                     accordionItem.className = 'accordion-item';
                     
-                    // Decidimos si este item debe estar abierto por defecto
-                    // (Solo el primero, que es el mes más reciente)
                     const isShow = index === 0 ? 'show' : '';
                     const isCollapsed = index === 0 ? '' : 'collapsed';
                     const isExpanded = index === 0 ? 'true' : 'false';
 
-                    accordionItem.innerHTML = `
+                    // --- HTML del Botón (HEADER) actualizado con totales ---
+                    const buttonHtml = `
                         <h2 class="accordion-header" id="heading-${monthKey}">
                             <button class="accordion-button ${isCollapsed}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${monthKey}" aria-expanded="${isExpanded}" aria-controls="collapse-${monthKey}">
-                                ${monthDisplay}
-                                <span class="badge bg-secondary ms-auto me-2">${envios.length} envíos</span>
+                                
+                                <!-- Lado Izquierdo: Nombre y Conteo -->
+                                <div>
+                                    ${monthDisplay}
+                                    <span class="badge bg-secondary ms-2">${envios.length} envíos</span>
+                                </div>
+                                
+                                <!-- Lado Derecho: Resumen de Pagos -->
+                                <div class="accordion-button-summary">
+                                    <span class="summary-item total">Total: ${totalMes}</span>
+                                    <span class="summary-item pagado">Pagado: ${totalPagado}</span>
+                                    <span class="summary-item pendiente">Pendiente: ${totalPendiente}</span>
+                                </div>
+
                             </button>
                         </h2>
+                    `;
+
+                    // --- HTML del Cuerpo (BODY) actualizado con nueva columna ---
+                    const bodyHtml = `
                         <div id="collapse-${monthKey}" class="accordion-collapse collapse ${isShow}" aria-labelledby="heading-${monthKey}" data-bs-parent="#enviosAccordion">
                             <div class="accordion-body">
                                 <div class="table-responsive">
@@ -326,6 +437,7 @@
                                                 <th>Asunto</th>
                                                 <th>Fecha</th>
                                                 <th>Costo Total</th>
+                                                <th>Estado</th> <!-- Nueva Columna -->
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -336,6 +448,8 @@
                             </div>
                         </div>
                     `;
+
+                    accordionItem.innerHTML = buttonHtml + bodyHtml;
                     
                     // 7. Añadir este item (de mes) al wrapper del acordeón
                     accordionWrapper.appendChild(accordionItem);
