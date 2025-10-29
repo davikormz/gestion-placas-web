@@ -5,3 +5,4 @@ Jinja2
 Requests
 gunicorn
 Flask-Login
+werkzeug==3.0.3
