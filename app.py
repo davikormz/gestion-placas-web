@@ -1,14 +1,13 @@
 import os
 import pymysql
-# 1. NO Usamos 'locale'. Es poco fiable en servidores.
-# import locale 
-from flask import Flask, render_template, jsonify, request, flash, redirect, url_for
+# import locale # No es fiable
+from flask import Flask, render_template, jsonify, request, flash, redirect, url_for, abort
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-# 2. Creamos un diccionario de traducción manual. 100% fiable.
+# Diccionario de traducción manual
 MESES_ESPANOL = {
     "January": "Enero", "February": "Febrero", "March": "Marzo",
     "April": "Abril", "May": "Mayo", "June": "Junio",
@@ -36,36 +35,165 @@ def get_db_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-# --- Clase de Usuario para Flask-Login ---
+# --- Clase de Usuario para Flask-Login (ACTUALIZADA con 'role') ---
 class Proveedor(UserMixin):
-    def __init__(self, id, email, password_hash):
+    def __init__(self, id, email, password_hash, role='proveedor'):
         self.id = id
         self.email = email
         self.password_hash = password_hash
+        self.role = role # Añadimos el rol
     
     def get_id(self):
         return self.id
+    
+    # Propiedad para verificar si es admin
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
 
-# --- "Cargador de Usuario" para Flask-Login ---
+# --- "Cargador de Usuario" para Flask-Login (ACTUALIZADO con 'role') ---
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_db_connection()
     with conn.cursor() as cursor:
+        # Asegúrate de que la columna 'role' exista en tu tabla 'proveedores'
         cursor.execute("SELECT * FROM proveedores WHERE id = %s", (user_id,))
         user_data = cursor.fetchone()
     conn.close()
     
     if user_data:
-        return Proveedor(id=user_data['id'], email=user_data['email'], password_hash=user_data['password_hash'])
+        return Proveedor(
+            id=user_data['id'], 
+            email=user_data['email'], 
+            password_hash=user_data['password_hash'],
+            role=user_data.get('role', 'proveedor') # Usamos .get por seguridad
+        )
     
     return None
 
-# --- Tus rutas existentes (Completas y Protegidas) ---
+# --- Rutas de la Aplicación ---
 
 @app.route('/')
 @login_required 
 def index():
-    return render_template('envios.html')
+    # Redirigimos a /envios, que ahora es la página principal
+    return redirect(url_for('envios_page'))
+
+# --- Ruta de Envíos (ACTUALIZADA para pasar el rol) ---
+@app.route('/envios')
+@login_required 
+def envios_page():
+    # Pasamos el rol del usuario a la plantilla
+    return render_template('envios.html', current_user_role=current_user.role)
+
+# --- NUEVA RUTA DE API (Solo para Admin) ---
+@app.route('/api/admin/lista_proveedores')
+@login_required
+def get_lista_proveedores():
+    # Verificamos si el usuario actual es admin
+    if not current_user.is_admin:
+        abort(403) # Error "Forbidden" si no es admin
+
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        # Obtenemos todos los emails de proveedores (excluyendo al admin, opcional)
+        cursor.execute("SELECT email FROM proveedores WHERE role = 'proveedor' ORDER BY email")
+        proveedores = cursor.fetchall()
+    conn.close()
+    
+    # Devolvemos solo la lista de emails
+    lista_emails = [p['email'] for p in proveedores]
+    return jsonify(lista_emails)
+
+# --- RUTA /api/envios (ACTUALIZADA con lógica de Admin) ---
+@app.route('/api/envios')
+@login_required 
+def get_envios():
+    
+    query_sql = ""
+    query_params = ()
+
+    if current_user.is_admin:
+        # Si es admin, revisamos el filtro
+        filtro_proveedor = request.args.get('proveedor', 'default')
+
+        if filtro_proveedor == 'default':
+            # 'default' para admin significa ver sus propios envíos (si tuviera)
+            query_sql = "SELECT * FROM envios WHERE destinatario = %s ORDER BY fecha DESC"
+            query_params = (current_user.email,)
+        elif filtro_proveedor == 'all':
+            # 'all' significa ver todos los envíos de TODOS
+            query_sql = "SELECT * FROM envios ORDER BY fecha DESC"
+            query_params = () # Sin parámetros
+        else:
+            # Si es un email específico, filtramos por ese email
+            query_sql = "SELECT * FROM envios WHERE destinatario = %s ORDER BY fecha DESC"
+            query_params = (filtro_proveedor,)
+    
+    else:
+        # Si NO es admin (es proveedor), solo ve lo suyo
+        query_sql = "SELECT * FROM envios WHERE destinatario = %s ORDER BY fecha DESC"
+        query_params = (current_user.email,)
+
+    # --- Ejecución de la consulta ---
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute(query_sql, query_params)
+        envios = cursor.fetchall()
+    conn.close()
+
+    # --- Lógica de Agrupación (Sin cambios) ---
+    grouped_envios = []
+    current_month_key = None
+    current_month_group = None
+    total_mes = 0
+    total_pagado = 0
+
+    for i, envio in enumerate(envios):
+        fecha_obj = envio['fecha']
+        month_key = fecha_obj.strftime("%Y-%m")
+        
+        if month_key != current_month_key:
+            if current_month_group is not None:
+                current_month_group['total_mes'] = total_mes
+                current_month_group['total_pagado'] = total_pagado
+                current_month_group['total_pendiente'] = total_mes - total_pagado
+                grouped_envios.append(current_month_group)
+
+            current_month_key = month_key
+            
+            month_name_en = fecha_obj.strftime("%B")
+            year = fecha_obj.strftime("%Y")
+            month_name_es = MESES_ESPANOL.get(month_name_en, month_name_en)
+            month_name = f"{month_name_es} {year}"
+            
+            current_month_group = {
+                "mes_key": current_month_key,
+                "mes_display": month_name,
+                "envios": []
+            }
+            total_mes = 0
+            total_pagado = 0
+        
+        current_month_group["envios"].append(envio)
+        
+        costo_actual = envio.get('costo_total') or 0
+        estado_actual = envio.get('estado_pago')
+        
+        total_mes += costo_actual
+        if estado_actual == 'Pagado':
+            total_pagado += costo_actual
+
+    if current_month_group is not None:
+        current_month_group['total_mes'] = total_mes
+        current_month_group['total_pagado'] = total_pagado
+        current_month_group['total_pendiente'] = total_mes - total_pagado
+        grouped_envios.append(current_month_group)
+
+    return jsonify(grouped_envios)
+
+
+# --- Otras Rutas de API (Sin cambios) ---
 
 @app.route('/api/placas')
 @login_required 
@@ -122,76 +250,6 @@ def get_costos():
     conn.close()
     return jsonify(costos)
 
-# --- RUTA /api/envios MODIFICADA ---
-@app.route('/api/envios')
-@login_required 
-def get_envios():
-    conn = get_db_connection()
-    with conn.cursor() as cursor:
-        # Asumimos que las columnas 'estado_pago' y 'nro_operacion' ya existen
-        cursor.execute(
-            "SELECT * FROM envios WHERE destinatario = %s ORDER BY fecha DESC", 
-            (current_user.email,)
-        )
-        envios = cursor.fetchall()
-    conn.close()
-
-    grouped_envios = []
-    current_month_key = None
-    current_month_group = None
-    total_mes = 0
-    total_pagado = 0
-
-    for i, envio in enumerate(envios):
-        fecha_obj = envio['fecha']
-        month_key = fecha_obj.strftime("%Y-%m")
-        
-        if month_key != current_month_key:
-            if current_month_group is not None:
-                current_month_group['total_mes'] = total_mes
-                current_month_group['total_pagado'] = total_pagado
-                current_month_group['total_pendiente'] = total_mes - total_pagado
-                grouped_envios.append(current_month_group)
-
-            current_month_key = month_key
-            
-            # 3. LÓGICA DE TRADUCCIÓN MANUAL
-            month_name_en = fecha_obj.strftime("%B")
-            year = fecha_obj.strftime("%Y")
-            # Buscamos en el diccionario, si no lo encuentra, usa el inglés
-            month_name_es = MESES_ESPANOL.get(month_name_en, month_name_en)
-            month_name = f"{month_name_es} {year}"
-            
-            current_month_group = {
-                "mes_key": current_month_key,
-                "mes_display": month_name,
-                "envios": []
-            }
-            total_mes = 0
-            total_pagado = 0
-        
-        current_month_group["envios"].append(envio)
-        
-        costo_actual = envio.get('costo_total') or 0
-        estado_actual = envio.get('estado_pago')
-        
-        total_mes += costo_actual
-        if estado_actual == 'Pagado':
-            total_pagado += costo_actual
-
-    if current_month_group is not None:
-        current_month_group['total_mes'] = total_mes
-        current_month_group['total_pagado'] = total_pagado
-        current_month_group['total_pendiente'] = total_mes - total_pagado
-        grouped_envios.append(current_month_group)
-
-    return jsonify(grouped_envios)
-
-@app.route('/envios')
-@login_required 
-def envios_page():
-    return render_template('envios.html')
-
 @app.route('/api/papeles')
 @login_required 
 def get_papeles():
@@ -225,7 +283,13 @@ def login():
         conn.close()
         
         if user_data:
-            proveedor_obj = Proveedor(id=user_data['id'], email=user_data['email'], password_hash=user_data['password_hash'])
+            # Pasamos el rol al constructor
+            proveedor_obj = Proveedor(
+                id=user_data['id'], 
+                email=user_data['email'], 
+                password_hash=user_data['password_hash'],
+                role=user_data.get('role', 'proveedor')
+            )
             if check_password_hash(proveedor_obj.password_hash, password):
                 login_user(proveedor_obj)
                 flash('Inicio de sesión exitoso.', 'success')

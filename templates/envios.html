@@ -6,6 +6,12 @@
     <title>Gestión de Placas - Envíos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- 1. PASAMOS EL ROL DE FLASK A JAVASCRIPT -->
+    <script>
+        const currentUserRole = '{{ current_user_role | default("proveedor") }}';
+    </script>
+    
     <style>
         /* Estilos generales */
         body {
@@ -145,7 +151,6 @@
             background-color: #3a3a3a; 
             color: #FFC107; 
         }
-        /* Flecha del acordeón */
         .accordion-button::after {
             filter: invert(1) grayscale(100%) brightness(200%);
             flex-shrink: 0;
@@ -159,38 +164,28 @@
             padding: 0; 
         }
 
-        /* --- CSS MODIFICADO PARA UN DISEÑO MÁS LIMPIO --- */
-        
-        /* Contenedor para los totales en el botón */
+        /* --- CSS PARA DISEÑO LIMPIO DE TOTALES --- */
         .accordion-button-summary {
             font-size: 1rem;
             font-weight: 400;
             text-align: right;
             margin-left: 1rem; 
             flex-shrink: 0; 
-            
-            /* Usamos Flexbox para alinear los totales horizontalmente */
             display: flex;
-            flex-wrap: wrap; /* Permitir que se apilen si no caben */
-            gap: 10px 20px; /* 10px de espacio vertical, 20px horizontal */
-            justify-content: flex-end; /* Alinearlos a la derecha */
+            flex-wrap: wrap; 
+            gap: 10px 20px; 
+            justify-content: flex-end; 
         }
-        
-        /* Cada item del resumen (Total, Pagado, Pendiente) */
         .summary-item {
             line-height: 1.4;
-            font-weight: 400; /* Etiqueta ligera */
+            font-weight: 400; 
             font-size: 0.95rem;
-            color: #ccc; /* Etiqueta suave */
+            color: #ccc; 
         }
-
-        /* El número (el valor en S/) */
         .summary-item strong {
-            font-weight: 700; /* Número grueso */
-            margin-left: 5px; /* Espacio entre etiqueta y número */
+            font-weight: 700; 
+            margin-left: 5px; 
         }
-        
-        /* Colores específicos para cada número */
         .summary-item.total strong {
             color: #ffffff;
         }
@@ -201,8 +196,7 @@
             color: #fd7e14; /* Naranja */
         }
 
-
-        /* Estilos para la celda de Estado en la tabla */
+        /* Estilos para la celda de Estado */
         .status-pagado {
             color: #28a745;
             font-weight: 600;
@@ -219,34 +213,54 @@
             line-height: 1;
         }
         
-        /* --- CSS MODIFICADO PARA MÓVILES --- */
+        /* --- NUEVOS ESTILOS PARA EL FILTRO DE ADMIN --- */
+        #admin-filter-container {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #333;
+        }
+        #admin-filter-container label {
+            font-weight: 600;
+            margin-right: 10px;
+            color: #FFC107;
+        }
+        .form-select-dark {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            border: 1px solid #444;
+        }
+        .form-select-dark:focus {
+            background-color: #3a3a3a;
+            color: #e0e0e0;
+            border-color: #FFC107;
+            box-shadow: 0 0 0 0.25rem rgba(255,193,7,.25);
+        }
+        /* --------------------------------------------- */
+
+
+        /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
             .accordion-button {
-                flex-direction: column; /* Apilar nombre y totales */
-                align-items: flex-start; /* Alinear a la izquierda */
+                flex-direction: column; 
+                align-items: flex-start; 
             }
             .accordion-button-summary {
-                /* Hacemos que los totales se apilen verticalmente */
                 flex-direction: column;
-                align-items: flex-start; /* Alinear a la izquierda */
+                align-items: flex-start; 
                 text-align: left;
                 margin-left: 0;
-                margin-top: 10px; /* Espacio entre nombre y totales */
+                margin-top: 10px; 
                 font-size: 0.9rem;
-                gap: 5px; /* Espacio vertical más pequeño */
+                gap: 5px; 
             }
             .accordion-button::after {
-                 /* Mover la flecha a la esquina superior derecha */
                 position: absolute;
                 top: 15px;
                 right: 15px;
             }
-        }
-        /* --------------------------------------------------- */
-
-
-        /* Media query para móviles (header) */
-        @media (max-width: 768px) {
+            
             .header {
                 flex-direction: column;
                 padding: 20px 0;
@@ -255,11 +269,18 @@
                 margin-right: 0;
                 margin-bottom: 10px;
             }
-            
-            /* (Ajuste para el bloque de logout) */
             .header div[style*="margin-left: auto"] {
                 margin: 15px 0 0 0 !important;
                 text-align: center !important;
+            }
+
+            /* Filtro de admin en móvil */
+            #admin-filter-container {
+                display: flex;
+                flex-direction: column;
+            }
+            #admin-filter-container label {
+                margin-bottom: 8px;
             }
         }
     </style>
@@ -286,19 +307,39 @@
 
     <!-- Contenido principal -->
     <div class="container-fluid">
-        <div class="row mb-4">
+        <div class="row mb-2">
             <div class="col-12">
                 <h2 class="section-title">Listado de Envíos</h2>
             </div>
         </div>
 
+        <!-- 
+            2. NUEVO CONTENEDOR DE FILTRO
+            Este bloque solo se renderizará si el usuario es 'admin'
+        -->
+        {% if current_user_role == 'admin' %}
+        <div class="row mb-4">
+            <div class="col-12" id="admin-filter-container">
+                <div class="d-flex align-items-center">
+                    <label for="admin-proveedor-filter" class="form-label mb-0">Vista de Administrador:</label>
+                    <select class="form-select form-select-dark w-auto" id="admin-proveedor-filter">
+                        <option value="default">Mis Envíos (Admin)</option>
+                        <option value="all">Ver Todos los Proveedores</option>
+                        <!-- Lista de proveedores se cargará aquí -->
+                    </select>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <!-- FIN DEL CONTENEDOR DE FILTRO -->
+
+
         <!--
             CONTENEDOR DEL ACORDEÓN
         -->
         <div id="accordion-container">
-            <!-- El contenido se cargará dinámicamente -->
             <div class="card">
-                <div class="card-body text-center">
+                <div class="card-body text-center" id="accordion-loading-message">
                     Cargando envíos...
                 </div>
             </div>
@@ -309,44 +350,66 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // --- FUNCIÓN loadEnvios (TOTALMENTE ACTUALIZADA) ---
-        async function loadEnvios() {
+        // Formateador de moneda (Soles Peruanos)
+        const currencyFormatter = new Intl.NumberFormat('es-PE', {
+            style: 'currency',
+            currency: 'PEN',
+            minimumFractionDigits: 2
+        });
+
+        // --- FUNCIÓN loadEnvios (ACTUALIZADA) ---
+        // Ahora acepta un parámetro para el filtro
+        async function loadEnvios(filtroProveedor = 'default') {
             const container = document.getElementById('accordion-container');
+            // Mostramos "Cargando..." cada vez que se llama
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-body text-center" id="accordion-loading-message">
+                        Cargando envíos...
+                    </div>
+                </div>`;
             
-            // Formateador de moneda (Soles Peruanos)
-            const currencyFormatter = new Intl.NumberFormat('es-PE', {
-                style: 'currency',
-                currency: 'PEN',
-                minimumFractionDigits: 2
-            });
+            let apiUrl = '/api/envios';
+
+            // 3. CONSTRUIMOS LA URL DE LA API BASADO EN EL ROL Y EL FILTRO
+            if (currentUserRole === 'admin') {
+                // Si es admin, añadimos el parámetro
+                apiUrl = `/api/envios?proveedor=${filtroProveedor}`;
+            }
+            // Si es 'proveedor', no añadimos nada, la API ya sabe qué hacer
 
             try {
                 // 1. Cargar envíos
-                const enviosResponse = await fetch('/api/envios');
+                const enviosResponse = await fetch(apiUrl);
                 if (!enviosResponse.ok) {
                     if (enviosResponse.status === 401) {
                         window.location.href = '/login'; 
                         return;
                     }
+                    if (enviosResponse.status === 403) {
+                         throw new Error('No tienes permiso para ver esta información.');
+                    }
                     throw new Error('Error en la respuesta de la API: ' + enviosResponse.status);
                 }
                 const groupedEnvios = await enviosResponse.json();
 
-                // Limpiar el contenedor
                 container.innerHTML = '';
 
                 // 2. Verificar si hay envíos
                 if (groupedEnvios.length === 0) {
+                    let mensaje = 'No se encontraron envíos registrados.';
+                    if (currentUserRole === 'admin' && filtroProveedor !== 'default') {
+                        mensaje = `No se encontraron envíos para el proveedor seleccionado.`;
+                    }
                     container.innerHTML = `
                         <div class="card">
                             <div class="card-body text-center">
-                                No se encontraron envíos registrados.
+                                ${mensaje}
                             </div>
                         </div>`;
                     return;
                 }
 
-                // 3. Crear el 'wrapper' principal del acordeón
                 const accordionWrapper = document.createElement('div');
                 accordionWrapper.className = 'accordion';
                 accordionWrapper.id = 'enviosAccordion';
@@ -357,7 +420,6 @@
                     const monthDisplay = group.mes_display; 
                     const envios = group.envios; 
 
-                    // Formatear los nuevos totales
                     const totalMes = currencyFormatter.format(group.total_mes || 0);
                     const totalPagado = currencyFormatter.format(group.total_pagado || 0);
                     const totalPendiente = currencyFormatter.format(group.total_pendiente || 0);
@@ -372,7 +434,6 @@
                         });
                         const costoFormateado = currencyFormatter.format(envio.costo_total || 0);
 
-                        // --- Lógica para la celda de Estado ---
                         const estado = envio.estado_pago || 'Pendiente';
                         const operacion = envio.nro_operacion;
                         let estadoHtml = '';
@@ -380,13 +441,11 @@
                         if (estado === 'Pagado') {
                             estadoHtml = `<span class="status-pagado">Pagado</span>`;
                             if (operacion) {
-                                // Añadimos el Nro de Op. si existe
                                 estadoHtml += `<span class="nro-operacion">(${operacion})</span>`;
                             }
                         } else {
                             estadoHtml = `<span class="status-pendiente">Pendiente</span>`;
                         }
-                        // ----------------------------------------
                         
                         const asuntoCell = `
                             <td style="white-space: normal; word-break: break-word; text-align: left; min-width: 250px;">
@@ -405,7 +464,7 @@
                                 <td>${estadoHtml}</td> 
                             </tr>
                         `;
-                    }).join(''); // Unimos todas las filas en un solo string
+                    }).join(''); 
 
                     // 6. Crear el HTML del 'Accordion Item' completo
                     const accordionItem = document.createElement('div');
@@ -415,29 +474,26 @@
                     const isCollapsed = index === 0 ? '' : 'collapsed';
                     const isExpanded = index === 0 ? 'true' : 'false';
 
-                    // --- HTML DEL BOTÓN (HEADER) ACTUALIZADO ---
+                    // HTML DEL BOTÓN (HEADER)
                     const buttonHtml = `
                         <h2 class="accordion-header" id="heading-${monthKey}">
                             <button class="accordion-button ${isCollapsed}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${monthKey}" aria-expanded="${isExpanded}" aria-controls="collapse-${monthKey}">
                                 
-                                <!-- Lado Izquierdo: Nombre y Conteo -->
                                 <div>
                                     ${monthDisplay}
                                     <span class="badge bg-secondary ms-2">${envios.length} envíos</span>
                                 </div>
                                 
-                                <!-- Lado Derecho: Resumen de Pagos -->
                                 <div class="accordion-button-summary">
                                     <span class="summary-item total">Total: <strong>${totalMes}</strong></span>
                                     <span class="summary-item pagado">Pagado: <strong>${totalPagado}</strong></span>
                                     <span class="summary-item pendiente">Pendiente: <strong>${totalPendiente}</strong></span>
                                 </div>
-
                             </button>
                         </h2>
                     `;
 
-                    // --- HTML del Cuerpo (BODY) actualizado ---
+                    // HTML del Cuerpo (BODY)
                     const bodyHtml = `
                         <div id="collapse-${monthKey}" class="accordion-collapse collapse ${isShow}" aria-labelledby="heading-${monthKey}" data-bs-parent="#enviosAccordion">
                             <div class="accordion-body">
@@ -452,7 +508,7 @@
                                                 <th>Asunto</th>
                                                 <th>Fecha</th>
                                                 <th>Costo Total</th>
-                                                <th>Estado</th> <!-- Nueva Columna -->
+                                                <th>Estado</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -464,24 +520,76 @@
                         </div>
                     `;
 
+V
                     accordionItem.innerHTML = buttonHtml + bodyHtml;
-                    
-                    // 7. Añadir este item (de mes) al wrapper del acordeón
                     accordionWrapper.appendChild(accordionItem);
                 });
 
-                // 8. Añadir el acordeón completo al contenedor de la página
                 container.appendChild(accordionWrapper);
 
             } catch (error) {
                 console.error('Error al cargar datos:', error);
                 container.innerHTML =
-                    '<div class="card"><div class="card-body text-center text-danger">Error al cargar los datos. Por favor, intente recargar la página.</div></div>';
+                    `<div class="card"><div class="card-body text-center text-danger">Error al cargar los datos: ${error.message}</div></div>`;
             }
         }
 
-        // Cargar datos al iniciar la página
-        document.addEventListener('DOMContentLoaded', loadEnvios);
+        // --- 4. NUEVA FUNCIÓN PARA CARGAR EL FILTRO DE ADMIN ---
+        async function loadAdminFilter() {
+            if (currentUserRole !== 'admin') {
+                return; // Si no es admin, no hace nada
+            }
+
+            const selectFilter = document.getElementById('admin-proveedor-filter');
+            if (!selectFilter) return; // Salir si el filtro no existe
+
+            try {
+                const response = await fetch('/api/admin/lista_proveedores');
+                if (!response.ok) {
+                    throw new Error('No se pudo cargar la lista de proveedores');
+                }
+                const proveedoresEmails = await response.json();
+
+                // Añadir un separador
+                const separator = document.createElement('option');
+                separator.disabled = true;
+                separator.innerHTML = '--- Proveedores ---';
+                selectFilter.appendChild(separator);
+
+                // Poblar la lista
+                proveedoresEmails.forEach(email => {
+                    const option = document.createElement('option');
+                    option.value = email;
+                    option.textContent = email;
+                    selectFilter.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error(error);
+                // Opcional: mostrar un error
+            }
+        }
+
+
+        // --- 5. INICIALIZACIÓN DE LA PÁGINA ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Carga inicial de envíos (con el filtro por defecto)
+            loadEnvios('default');
+
+            // Si es admin, carga el filtro Y añade el listener
+            if (currentUserRole === 'admin') {
+                loadAdminFilter(); // Carga la lista de proveedores en el <select>
+
+                const selectFilter = document.getElementById('admin-proveedor-filter');
+                if (selectFilter) {
+                    // Cuando el admin cambia el filtro, recargamos los envíos
+                    selectFilter.addEventListener('change', (e) => {
+                        const nuevoFiltro = e.target.value;
+                        loadEnvios(nuevoFiltro);
+                    });
+                }
+            }
+        });
     </script>
 </body>
 </html>
