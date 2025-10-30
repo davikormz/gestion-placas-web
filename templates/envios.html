@@ -330,12 +330,14 @@
 </head>
 <body>
     <div class="header">
-        <img src="/static/img/logo_negro_y_blanco.png" alt="Logo Amilgraf">
-        <div>
-            <h1>Sistema de Gestión de Placas</h1>
-            <p>Consulta de envíos</p>
-        </div>
-
+        
+        <a href="{{ url_for('envios_page') }}" class="d-flex align-items-center" style="text-decoration: none; color: inherit;">
+            <img src="/static/img/logo_negro_y_blanco.png" alt="Logo Amilgraf">
+            <div>
+                <h1>Sistema de Gestión de Placas</h1>
+                <p>Consulta de envíos</p>
+            </div>
+        </a>
         {% if current_user.is_authenticated %}
         <div style="margin-left: auto; margin-right: 40px; text-align: right; font-size: 0.9rem;">
             Logueado como: <strong>{{ current_user.email }}</strong>
@@ -345,7 +347,6 @@
             <a href="{{ url_for('admin_pagos_page') }}" style="color: #FFC107; text-decoration: underline; font-weight: 600; margin-right: 15px;">
                 Panel de Pagos
             </a>
-            
             <a href="{{ url_for('admin_precios_page') }}" style="color: #FFC107; text-decoration: underline; font-weight: 600; margin-right: 15px;">
                 Gestión de Precios
             </a>

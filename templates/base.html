@@ -22,14 +22,13 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 
-                <div class="flex items-center space-x-3">
+                <a href="{{ url_for('envios_page') }}" class="flex items-center space-x-3">
                     <img src="{{ url_for('static', filename='img/logo_negro_y_blanco.png') }}" 
                          alt="Logo" 
                          class="h-10 w-10" 
                          style="filter: invert(1);">
                     <span class="text-xl font-bold tracking-tight">Sistema de Gestión de Placas</span>
-                </div>
-                
+                </a>
                 <div class="flex items-center space-x-4">
                     {% if current_user.is_authenticated %}
                         <span class="text-sm text-gray-300 hidden sm:block">
@@ -45,7 +44,7 @@
                                class="text-sm font-medium text-yellow-400 hover:text-yellow-200 px-3 py-2 rounded-md">
                                 Gestión de Precios
                             </a>
-                            {% endif %}
+                        {% endif %}
                         <a href="{{ url_for('logout') }}" 
                            class="text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md">
                             Cerrar Sesión
