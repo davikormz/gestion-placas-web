@@ -322,6 +322,15 @@
         <div style="margin-left: auto; margin-right: 40px; text-align: right; font-size: 0.9rem;">
             Logueado como: <strong>{{ current_user.email }}</strong>
             <br>
+
+            <!-- ==== INICIO DEL CÓDIGO AÑADIDO ==== -->
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin_pagos_page') }}" style="color: #FFC107; text-decoration: underline; font-weight: 600; margin-right: 15px;">
+                Panel de Pagos
+            </a>
+            {% endif %}
+            <!-- ==== FIN DEL CÓDIGO AÑADIDO ==== -->
+
             <a href="{{ url_for('logout') }}" style="color: #FFC107; text-decoration: underline; font-weight: 600;">
                 Cerrar Sesión
             </a>

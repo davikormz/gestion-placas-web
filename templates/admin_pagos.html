@@ -1,149 +1,299 @@
-{% extends 'base.html' %}
-
-{% block title %}Panel de Pagos (Admin){% endblock %}
-
-{% block content %}
-<div class="container mx-auto px-4 py-8 max-w-3xl">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Placas - Panel de Pagos</title>
+    <!-- NOTA: Usamos los mismos estilos que envios.html para consistencia -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     
-    <!-- Encabezado -->
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Pagos Pendientes</h1>
-        <a href="{{ url_for('envios_page') }}" class="text-sm text-indigo-600 hover:text-indigo-800">&larr; Volver a Envíos</a>
-    </div>
-
-    <!-- Contenedor de la lista de pagos -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <ul id="lista-pagos" class="divide-y divide-gray-200">
-            
-            {% if envios %}
-                {% for envio in envios %}
-                <!-- Fila de Envío (usamos ID para el JS) -->
-                <li id="envio-row-{{ envio.id }}" class="p-4 transition-all duration-500 ease-out">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    
-                        <!-- Detalles del Envío -->
-                        <div class="flex-grow mb-4 sm:mb-0">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm font-semibold text-indigo-600">ID: {{ envio.id }}</span>
-                                <span class="text-xl font-bold text-gray-800">S/ {{ "%.2f"|format(envio.costo_total) }}</span>
-                            </div>
-                            <p class="text-gray-700 mt-1 font-medium">{{ envio.asunto }}</p>
-                            <p class="text-sm text-gray-500">
-                                Para: <span class="font-medium text-gray-600">{{ envio.destinatario }}</span>
-                            </p>
-                            <p class="text-sm text-gray-500">
-                                Fecha: <span class="font-medium text-gray-600">{{ envio.fecha.strftime('%d/%m/%Y') }}</span>
-                            </p>
-                        </div>
-                        
-                        <!-- Formulario de Acción (alineado a la derecha en SM) -->
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:ml-4 space-y-2 sm:space-y-0 sm:space-x-2">
-                            <input 
-                                type="text" 
-                                id="nro-op-{{ envio.id }}"
-                                placeholder="Nro. Operación (Opcional)"
-                                class="form-input w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-                            
-                            <button 
-                                onclick="marcarPagado(event, {{ envio.id }})"
-                                class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out whitespace-nowrap">
-                                Marcar Pagado
-                            </button>
-                        </div>
-                    </div>
-                </li>
-                {% endfor %}
-            {% else %}
-                <!-- Estado vacío -->
-                <li class="p-6 text-center text-gray-500">
-                    <svg class="mx-auto h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">¡Todo al día!</h3>
-                    <p class="mt-1 text-sm text-gray-500">No hay pagos pendientes por procesar.</p>
-                </li>
-            {% endif %}
-        </ul>
-    </div>
-</div>
-
-<!-- Script de JavaScript -->
-<script>
-async function marcarPagado(event, envioId) {
-    // 1. Encontrar el botón y deshabilitarlo para evitar doble click
-    const button = event.target;
-    button.disabled = true;
-    button.innerHTML = `
-        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        Procesando...`;
-
-    // 2. Obtener el nro_operacion
-    const inputNroOp = document.getElementById(`nro-op-${envioId}`);
-    const nroOperacion = inputNroOp.value.trim();
-
-    // 3. Preparar la llamada a la API
-    try {
-        const response = await fetch('/api/admin/marcar_pagado', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // NOTA: Si usas Flask-WTF con CSRF, necesitarás enviar el token aquí.
-                // 'X-CSRFToken': '{{ csrf_token() }}' (si está configurado)
-            },
-            body: JSON.stringify({
-                id: envioId,
-                nro_operacion: nroOperacion || null // Enviar null si está vacío
-            })
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-            // ¡Éxito! Dar feedback visual
-            const row = document.getElementById(`envio-row-${envioId}`);
-            
-            // 1. Difuminar y deslizar
-            row.style.opacity = '0';
-            row.style.transform = 'translateX(50px)';
-            
-            // 2. Esperar a que termine la animación para eliminarlo
-            setTimeout(() => {
-                row.remove();
-                
-                // 3. Opcional: verificar si la lista quedó vacía
-                const lista = document.getElementById('lista-pagos');
-                if (lista.getElementsByTagName('li').length === 0) {
-                    lista.innerHTML = `
-                        <li class="p-6 text-center text-gray-500">
-                            <svg class="mx-auto h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">¡Todo al día!</h3>
-                            <p class="mt-1 text-sm text-gray-500">No hay pagos pendientes por procesar.</p>
-                        </li>`;
-                }
-            }, 500); // 500ms (coincide con 'duration-500' de Tailwind)
-
-        } else {
-            // Error manejado por el backend
-            console.error('Error al marcar el pago:', result.message);
-            // Revertir el botón
-            button.disabled = false;
-            button.textContent = 'Marcar Pagado';
-            // Aquí podrías mostrar una alerta más elegante
-            alert('Error: ' + result.message);
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
         }
 
-    } catch (error) {
-        // Error de red
-        console.error('Error de red:', error);
-        button.disabled = false;
-        button.textContent = 'Marcar Pagado';
-        alert('Error de red. Revisa tu conexión e intenta de nuevo.');
-    }
-}
-</script>
-{% endblock %}
+        /* Cabecera (copiada de envios.html) */
+        .header {
+            background: linear-gradient(135deg, #1e1e1e, #2c2c2c);
+            color: #ffffff;
+            padding: 40px 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .header img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .header p {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        /* Contenedor principal */
+        .container-fluid { 
+            max-width: 1400px; 
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+        
+        /* Estilos para la lista de pagos */
+        .list-group-item {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Para móviles */
+        }
+        .list-group-item:first-child {
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        .list-group-item:last-child {
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        .payment-info {
+            flex-grow: 1;
+            margin-right: 1rem;
+        }
+        .payment-info strong {
+            color: #FFC107;
+            font-size: 1.1rem;
+        }
+        .payment-info span {
+            color: #999;
+            font-size: 0.9rem;
+            margin: 0 5px;
+        }
+        .payment-actions {
+            display: flex;
+            align-items: center;
+            margin-top: 10px; /* Para móviles */
+        }
+        .form-control-dark {
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            max-width: 150px;
+            margin-right: 10px;
+        }
+        .btn-warning {
+             background-color: #FFC107;
+             border-color: #FFC107;
+             color: #121212;
+             font-weight: 600;
+        }
+        
+        /* Mensaje de feedback */
+        .feedback-message {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 1050;
+        }
+        .feedback-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .feedback-error {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        @media (max-width: 576px) {
+            .payment-info {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .payment-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .form-control-dark {
+                flex-grow: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cabecera (Copiada de envios.html) -->
+    <div class="header">
+        <img src="/static/img/logo_negro_y_blanco.png" alt="Logo Amilgraf">
+        <div>
+            <h1>Sistema de Gestión de Placas</h1>
+            <p>Consulta de envíos</p>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <div style="margin-left: auto; margin-right: 40px; text-align: right; font-size: 0.9rem;">
+            Logueado como: <strong>{{ current_user.email }}</strong>
+            <br>
+            
+            <!-- Enlaces de Navegación -->
+            <a href="{{ url_for('envios_page') }}" style="color: #FFC107; text-decoration: underline; font-weight: 600; margin-right: 15px;">
+                Ver Envíos
+            </a>
+            
+            <a href="{{ url_for('logout') }}" style="color: #FFC107; text-decoration: underline; font-weight: 600;">
+                Cerrar Sesión
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Contenido del Panel de Pagos -->
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="section-title">Panel de Pagos Pendientes</h2>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <ul class="list-group" id="payment-list">
+                    
+                    {% if envios %}
+                        {% for envio in envios %}
+                        <li class="list-group-item" data-id="{{ envio.id }}">
+                            <div class="payment-info">
+                                <strong>{{ envio.asunto }}</strong>
+                                <span>|</span>
+                                S/ {{ "%.2f"|format(envio.costo_total) }}
+                                <span>|</span>
+                                <small>ID: {{ envio.id }} | {{ envio.destinatario }}</small>
+                            </div>
+                            <div class="payment-actions">
+                                <input type="text" class="form-control form-control-dark nro-operacion-input" placeholder="Nro. Op (Opcional)">
+                                <button class="btn btn-warning btn-sm pagar-btn">
+                                    Marcar Pagado
+                                </button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item text-center">
+                            ¡Felicidades! No hay ningún pago pendiente.
+                        </li>
+                    {% endif %}
+                    
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor para mensajes de feedback -->
+    <div id="feedback-message" class="feedback-message"></div>
+
+
+    <script>
+        // Muestra un mensaje flotante de éxito o error
+        function showFeedback(message, isSuccess = true) {
+            const feedbackElement = document.getElementById('feedback-message');
+            feedbackElement.textContent = message;
+            feedbackElement.className = isSuccess ? 'feedback-message feedback-success' : 'feedback-message feedback-error';
+            feedbackElement.style.display = 'block';
+
+            setTimeout(() => {
+                feedbackElement.style.display = 'none';
+            }, 3000);
+        }
+
+        document.getElementById('payment-list').addEventListener('click', async (e) => {
+            // Solo nos interesa si hicieron clic en el botón de pagar
+            if (e.target.classList.contains('pagar-btn')) {
+                
+                const boton = e.target;
+                const item = boton.closest('.list-group-item');
+                const envioId = item.dataset.id;
+                const inputOperacion = item.querySelector('.nro-operacion-input');
+                const nroOperacion = inputOperacion.value.trim();
+
+                // Deshabilitar botón para evitar doble clic
+                boton.disabled = true;
+                boton.textContent = 'Pagando...';
+
+                try {
+                    const response = await fetch('/api/admin/marcar_pagado', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            id: envioId,
+                            nro_operacion: nroOperacion || null // Enviar null si está vacío
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        // ¡Éxito! Ocultar la fila
+                        item.style.transition = 'opacity 0.5s ease';
+                        item.style.opacity = '0.3';
+                        showFeedback('¡Pago registrado con éxito!', true);
+                        
+                        // Opcional: eliminarlo después de la animación
+                        setTimeout(() => {
+                            item.remove();
+                            // Verificar si la lista está vacía
+                            if (document.getElementById('payment-list').children.length === 0) {
+                                document.getElementById('payment-list').innerHTML = `
+                                    <li class="list-group-item text-center">
+                                        ¡Felicidades! No hay ningún pago pendiente.
+                                    </li>
+                                `;
+                            }
+                        }, 500);
+
+                    } else {
+                        // Error manejado por el backend
+                        console.error('Error al marcar pagado:', data.message);
+                        showFeedback(`Error: ${data.message}`, false);
+                        boton.disabled = false;
+                        boton.textContent = 'Marcar Pagado';
+                    }
+
+                } catch (error) {
+                    // Error de red
+                    console.error('Error de red:', error);
+                    showFeedback('Error de red. Intenta de nuevo.', false);
+                    boton.disabled = false;
+                    boton.textContent = 'Marcar Pagado';
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
