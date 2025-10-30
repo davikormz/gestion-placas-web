@@ -323,14 +323,11 @@
             Logueado como: <strong>{{ current_user.email }}</strong>
             <br>
 
-            <!-- ==== INICIO DEL CÓDIGO AÑADIDO ==== -->
             {% if current_user.is_admin %}
             <a href="{{ url_for('admin_pagos_page') }}" style="color: #FFC107; text-decoration: underline; font-weight: 600; margin-right: 15px;">
                 Panel de Pagos
             </a>
             {% endif %}
-            <!-- ==== FIN DEL CÓDIGO AÑADIDO ==== -->
-
             <a href="{{ url_for('logout') }}" style="color: #FFC107; text-decoration: underline; font-weight: 600;">
                 Cerrar Sesión
             </a>
@@ -351,9 +348,8 @@
                 <div class="d-flex align-items-center">
                     <label for="admin-proveedor-filter" class="form-label mb-0">Vista de Administrador:</label>
                     <select class="form-select form-select-dark w-auto" id="admin-proveedor-filter">
-                        <option value="default">Mis Envíos (Admin)</option>
-                        <option value="all">Ver Todos los Proveedores</option>
-                        </select>
+                        <option value="all" selected>Ver Todos los Proveedores</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -681,6 +677,7 @@
                     noResultsMessage.style.display = 'block';
                 } else {
                     noResultsMessage.style.display = 'none';
+
                 }
             });
         }
@@ -688,7 +685,8 @@
 
         // --- 6. INICIALIZACIÓN DE LA PÁGINA (Sin cambios) ---
         document.addEventListener('DOMContentLoaded', () => {
-            loadEnvios('default');
+            // CAMBIO AQUÍ: Se carga 'all' por defecto en lugar de 'default'
+            loadEnvios('all');
             
             setupSearchFilter(); // Esta función ahora es más inteligente
 
