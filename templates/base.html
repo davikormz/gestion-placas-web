@@ -3,38 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Proveedores</title>
-    <!-- Cargar Tailwind CSS para un diseño limpio -->
+    
+    <!-- El título de la pestaña ahora es un bloque que se puede cambiar -->
+    <title>{% block title %}Gestión de Placas{% endblock %}</title>
+    
+    <!-- Cargar Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Estilos para las alertas de 'flash' -->
     <style>
-        /* Estilos simples para las alertas de 'flash' */
-        .alert-success { background-color: #d4edda; color: #155724; padding: 0.75rem; border: 1px solid #c3e6cb; border-radius: 0.25rem; margin-bottom: 1rem; }
-        .alert-danger { background-color: #f8d7da; color: #721c24; padding: 0.75rem; border: 1px solid #f5c6cb; border-radius: 0.25rem; margin-bottom: 1rem; }
-        .alert-info { background-color: #d1ecf1; color: #0c5460; padding: 0.75rem; border: 1px solid #bee5eb; border-radius: 0.25rem; margin-bottom: 1rem; }
-        .alert-warning { background-color: #fff3cd; color: #856404; padding: 0.75rem; border: 1px solid #ffeeba; border-radius: 0.25rem; margin-bottom: 1rem; }
+        .alert { padding: 0.75rem; border: 1px solid transparent; border-radius: 0.25rem; margin-bottom: 1rem; }
+        .alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+        .alert-warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full space-y-8">
-            
-            <!-- Bloque para mostrar mensajes 'flash' de Flask -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                <div class="flashes">
-                    {% for category, message in messages %}
-                    <div class="alert-{{ category }}" role="alert">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
+
+    <!-- ===== BARRA DE NAVEGACIÓN (Basada en tu screenshot) ===== -->
+    <nav class="bg-gray-900 text-white shadow-lg">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <!-- Logo y Título -->
+                <div class="flex items-center space-x-3">
+                    <!-- Asumo la ruta de tu logo; ajusta si es necesario -->
+                    <!-- El 'filter: invert(1)' lo vuelve blanco para el fondo oscuro -->
+                    <img src="{{ url_for('static', filename='img/logo_negro_y_blanco.png') }}" 
+                         alt="Logo" 
+                         class="h-10 w-10" 
+                         style="filter: invert(1);">
+                    <span class="text-xl font-bold tracking-tight">Sistema de Gestión de Placas</span>
                 </div>
-                {% endif %}
-            {% endwith %}
-
-            <!-- El contenido de las páginas (login, register) irá aquí -->
-            {% block content %}{% endblock %}
-
+                
+                <!-- Info de Usuario y Links -->
+                <div class="flex items-center space-x-4">
+                    {% if current_user.is_authenticated %}
+                        <span class="text-sm text-gray-300 hidden sm:block">
+                            Logueado como: <strong class="font-medium">{{ current_user.email }}</strong>
+                        </span>
+                        
+                        <!-- ===== ¡AQUÍ ESTÁ EL NUEVO ENLACE! ===== -->
+                        {% if current_user.is_admin %}
+                            <a href="{{ url_for('admin_pagos_page') }}" 
+                               class="text-sm font-medium text-yellow-400 hover:text-yellow-200 px-3 py-2 rounded-md">
+                                Panel de Pagos
+                            </a>
+                        {% endif %}
+                        <!-- ======================================= -->
+                        
+                        <a href="{{ url_for('logout') }}" 
+                           class="text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md">
+                            Cerrar Sesión
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-    </div>
+    </nav>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main>
+        <!-- Bloque para mostrar mensajes 'flash' de Flask -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <!-- Usamos un contenedor que coincida con el de las páginas -->
+            <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6">
+                {% for category, message in messages %}
+                <div class_alias="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- El contenido de las páginas (envios, admin_pagos) irá aquí -->
+        {% block content %}{% endblock %}
+        
+    </main>
+
 </body>
 </html>
