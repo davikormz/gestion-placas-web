@@ -456,11 +456,15 @@
                         });
                         const costoFormateado = currencyFormatter.format(envio.costo_total || 0);
 
-                        const estado = envio.estado_pagado || 'Pendiente';
+                        // --- INICIO DE LA CORRECCIÓN ---
+                        // Limpiamos el dato 'estado_pago' en el frontend ANTES de usarlo.
+                        const estado = (envio.estado_pago || 'Pendiente').trim();
+                        // --- FIN DE LA CORRECCIÓN ---
+                        
                         const operacion = envio.nro_operacion;
                         let estadoHtml = '';
 
-                        if (estado === 'Pagado') {
+                        if (estado === 'Pagado') { // Esta comparación ahora funcionará
                             estadoHtml = `<span class="status-pagado">Pagado</span>`;
                             if (operacion) {
                                 estadoHtml += `<span class="nro-operacion">(${operacion})</span>`;
