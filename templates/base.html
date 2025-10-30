@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- El título de la pestaña ahora es un bloque que se puede cambiar -->
     <title>{% block title %}Gestión de Placas{% endblock %}</title>
     
-    <!-- Cargar Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Estilos para las alertas de 'flash' -->
     <style>
         .alert { padding: 0.75rem; border: 1px solid transparent; border-radius: 0.25rem; margin-bottom: 1rem; }
         .alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
@@ -21,15 +18,11 @@
 </head>
 <body class="bg-gray-100 font-sans antialiased">
 
-    <!-- ===== BARRA DE NAVEGACIÓN (Basada en tu screenshot) ===== -->
     <nav class="bg-gray-900 text-white shadow-lg">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 
-                <!-- Logo y Título -->
                 <div class="flex items-center space-x-3">
-                    <!-- Asumo la ruta de tu logo; ajusta si es necesario -->
-                    <!-- El 'filter: invert(1)' lo vuelve blanco para el fondo oscuro -->
                     <img src="{{ url_for('static', filename='img/logo_negro_y_blanco.png') }}" 
                          alt="Logo" 
                          class="h-10 w-10" 
@@ -37,22 +30,22 @@
                     <span class="text-xl font-bold tracking-tight">Sistema de Gestión de Placas</span>
                 </div>
                 
-                <!-- Info de Usuario y Links -->
                 <div class="flex items-center space-x-4">
                     {% if current_user.is_authenticated %}
                         <span class="text-sm text-gray-300 hidden sm:block">
                             Logueado como: <strong class="font-medium">{{ current_user.email }}</strong>
                         </span>
                         
-                        <!-- ===== ¡AQUÍ ESTÁ EL NUEVO ENLACE! ===== -->
                         {% if current_user.is_admin %}
                             <a href="{{ url_for('admin_pagos_page') }}" 
                                class="text-sm font-medium text-yellow-400 hover:text-yellow-200 px-3 py-2 rounded-md">
                                 Panel de Pagos
                             </a>
-                        {% endif %}
-                        <!-- ======================================= -->
-                        
+                            <a href="{{ url_for('admin_precios_page') }}" 
+                               class="text-sm font-medium text-yellow-400 hover:text-yellow-200 px-3 py-2 rounded-md">
+                                Gestión de Precios
+                            </a>
+                            {% endif %}
                         <a href="{{ url_for('logout') }}" 
                            class="text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md">
                             Cerrar Sesión
@@ -63,15 +56,12 @@
         </div>
     </nav>
 
-    <!-- ===== CONTENIDO PRINCIPAL ===== -->
     <main>
-        <!-- Bloque para mostrar mensajes 'flash' de Flask -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <!-- Usamos un contenedor que coincida con el de las páginas -->
             <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6">
                 {% for category, message in messages %}
-                <div class_alias="alert alert-{{ category }}" role="alert">
+                <div class="alert alert-{{ category }}" role="alert">
                     {{ message }}
                 </div>
                 {% endfor %}
@@ -79,7 +69,6 @@
             {% endif %}
         {% endwith %}
 
-        <!-- El contenido de las páginas (envios, admin_pagos) irá aquí -->
         {% block content %}{% endblock %}
         
     </main>

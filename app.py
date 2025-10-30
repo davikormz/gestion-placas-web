@@ -428,6 +428,63 @@ def api_marcar_pagado():
 
 # --- (FIN) PROPUESTA 2: PANEL DE PAGOS ADMIN ---
 
+# --- (INICIO) NUEVA RUTA: GESTIÓN DE PRECIOS ADMIN ---
+@app.route('/admin/precios')
+@login_required
+def admin_precios_page():
+    """
+    Muestra la página de Gestión de Precios solo para administradores.
+    Obtiene todas las placas de la tabla 'placas' y hace un
+    LEFT JOIN con la tabla 'costos' usando ancho y alto.
+    """
+    # 1. Verificar si es admin
+    if not current_user.is_admin:
+        flash('Acceso no autorizado. Esta página es solo para administradores.', 'danger')
+        return redirect(url_for('envios_page'))
+
+    # 2. Función de formato de moneda
+    def format_pen(value):
+        return f"S/ {value:,.2f}" if value is not None and value != 0 else "---"
+
+    # 3. Consultar placas y costos con LEFT JOIN
+    conn = get_db_connection()
+    placas_con_costos = []
+    try:
+        with conn.cursor() as cursor:
+            # Esta es la consulta SQL que une las dos tablas
+            sql_query = """
+            SELECT 
+                p.referencia, 
+                p.ancho, 
+                p.alto, 
+                p.pinza,
+                c.costo_set, 
+                c.placas_por_set
+            FROM 
+                placas p
+            LEFT JOIN 
+                costos c ON p.ancho = c.ancho AND p.alto = c.alto
+            ORDER BY 
+                p.ancho DESC, p.alto DESC
+            """
+            cursor.execute(sql_query)
+            placas_con_costos = cursor.fetchall()
+            
+    except Exception as e:
+        print(f"Error al consultar placas y costos: {e}")
+        flash('Error al cargar la página de precios.', 'danger')
+    finally:
+        conn.close()
+
+    # 4. Renderizar plantilla
+    return render_template(
+        'admin_precios.html', 
+        placas_con_costos=placas_con_costos, # Es una lista de diccionarios
+        format_pen=format_pen,
+        current_user_role='admin' # Para el header
+    )
+# --- (FIN) NUEVA RUTA: GESTIÓN DE PRECIOS ADMIN ---
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
