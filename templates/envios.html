@@ -134,7 +134,6 @@
         .accordion-button {
             background-color: #2c2c2c; 
             color: #ffffff; 
-            font-size: 1.2rem;
             font-weight: 600;
             border: none;
             box-shadow: none; 
@@ -142,6 +141,7 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
+            padding: 1rem 1.25rem; /* Padding ajustado */
         }
         .accordion-button.collapsed {
              background-color: #2c2c2c;
@@ -163,37 +163,54 @@
             padding: 0; 
         }
 
-        /* --- CSS PARA DISEÑO LIMPIO DE TOTALES --- */
-        .accordion-button-summary {
-            font-size: 1rem;
-            font-weight: 400;
-            text-align: right;
-            margin-left: 1rem; 
-            flex-shrink: 0; 
+        /* --- INICIO: NUEVOS ESTILOS PARA ENCABEZADO DE ACORDEÓN --- */
+        .button-content-wrapper {
             display: flex;
-            flex-wrap: wrap; 
-            gap: 10px 20px; 
-            justify-content: flex-end; 
+            flex-direction: column;
+            flex-grow: 1; /* Ocupa todo el espacio disponible a la izquierda */
+            margin-right: 1.5rem; /* Deja espacio para el icono 'after' */
         }
-        .summary-item {
+
+        .button-title-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px; /* Espacio entre título y resumen */
+        }
+        
+        .button-month-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: inherit; /* Hereda el color del botón (blanco o amarillo) */
+        }
+        
+        /* Fila del Resumen Financiero */
+        .button-summary-row {
+            display: flex;
+            flex-wrap: wrap; /* !IMPORTANTE para móvil */
+            gap: 10px 20px; /* Espacio entre items */
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        .button-summary-row .summary-item {
+            color: #ccc;
             line-height: 1.4;
-            font-weight: 400; 
-            font-size: 0.95rem;
-            color: #ccc; 
         }
-        .summary-item strong {
-            font-weight: 700; 
-            margin-left: 5px; 
+        .button-summary-row .summary-item strong {
+            font-weight: 700;
+            margin-left: 4px;
         }
-        .summary-item.total strong {
+        .button-summary-row .summary-item.total strong {
             color: #ffffff;
         }
-        .summary-item.pagado strong {
+        .button-summary-row .summary-item.pagado strong {
             color: #28a745; /* Verde */
         }
-        .summary-item.pendiente strong {
+        .button-summary-row .summary-item.pendiente strong {
             color: #fd7e14; /* Naranja */
         }
+        /* --- FIN: NUEVOS ESTILOS --- */
+
 
         /* Estilos para la celda de Estado */
         .status-pagado {
@@ -268,24 +285,25 @@
         /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
             .accordion-button {
-                flex-direction: column; 
-                align-items: flex-start; 
+                /* Ya no forzamos flex-direction: column */
+                align-items: flex-start; /* Alinear contenido arriba */
+                position: relative; /* Para el posicionamiento absoluto del icono */
             }
-            .accordion-button-summary {
-                flex-direction: column;
-                align-items: flex-start; 
-                text-align: left;
-                margin-left: 0;
-                margin-top: 10px; 
-                font-size: 0.9rem;
-                gap: 5px; 
-            }
+            
+            /* Posicionamos el icono en la esquina superior derecha */
             .accordion-button::after {
                 position: absolute;
                 top: 15px;
                 right: 15px;
             }
             
+            .button-title-row {
+                 /* Dejar espacio para el icono de la esquina */
+                padding-right: 30px; 
+            }
+            
+            /* El .button-summary-row se ajustará solo gracias a 'flex-wrap' */
+
             .header {
                 flex-direction: column;
                 padding: 20px 0;
@@ -504,23 +522,31 @@
                     const isCollapsed = index === 0 ? '' : 'collapsed';
                     const isExpanded = index === 0 ? 'true' : 'false';
 
+                    // --- INICIO: CAMBIO DE ESTRUCTURA DEL BOTÓN ---
                     const buttonHtml = `
                         <h2 class="accordion-header" id="heading-${monthKey}">
                             <button class="accordion-button ${isCollapsed}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${monthKey}" aria-expanded="${isExpanded}" aria-controls="collapse-${monthKey}">
                                 
-                                <div>
-                                    ${monthDisplay}
-                                    <span class="badge bg-secondary ms-2">${envios.length} envíos</span>
+                                <div class="button-content-wrapper">
+                                    
+                                    <div class="button-title-row">
+                                        <span class="button-month-title">${monthDisplay}</span>
+                                        <span class="badge bg-secondary ms-2">${envios.length} envíos</span>
+                                    </div>
+                                    
+                                    <div class="button-summary-row">
+                                        <span class="summary-item total">Total: <strong>${totalMes}</strong></span>
+                                        <span class="summary-item pagado">Pagado: <strong>${totalPagado}</strong></span>
+                                        
+                                        <span class="summary-item pendiente">Pendiente: <strong>${totalPendiente}</strong></span>
+                                    </div>
                                 </div>
                                 
-                                <div class="accordion-button-summary">
-                                    <span class="summary-item total">Total: <strong>${totalMes}</strong></span>
-                                    <span class="summary-item pagado">Pagado: <strong>${totalPagado}</strong></span>
-                                    <span class="summary-item pendiente"><strong>${totalPendiente}</strong></span>
-                                </div>
-                            </button>
+                                </button>
                         </h2>
                     `;
+                    // --- FIN: CAMBIO DE ESTRUCTURA DEL BOTÓN ---
+
 
                     // HTML del Cuerpo (BODY)
                     const bodyHtml = `
@@ -685,7 +711,6 @@
 
         // --- 6. INICIALIZACIÓN DE LA PÁGINA (Sin cambios) ---
         document.addEventListener('DOMContentLoaded', () => {
-            // CAMBIO AQUÍ: Se carga 'all' por defecto en lugar de 'default'
             loadEnvios('all');
             
             setupSearchFilter(); // Esta función ahora es más inteligente
