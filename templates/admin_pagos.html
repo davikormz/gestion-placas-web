@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Pagos (Admin){% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Pagos Pendientes</h1>
+        <a href="{{ url_for('envios_page') }}" class="text-sm text-indigo-600 hover:text-indigo-800">&larr; Volver a Envíos</a>
+    </div>
+
+    <!-- Contenedor de la lista de pagos -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <ul id="lista-pagos" class="divide-y divide-gray-200">
+            
+            {% if envios %}
+                {% for envio in envios %}
+                <!-- Fila de Envío (usamos ID para el JS) -->
+                <li id="envio-row-{{ envio.id }}" class="p-4 transition-all duration-500 ease-out">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    
+                        <!-- Detalles del Envío -->
+                        <div class="flex-grow mb-4 sm:mb-0">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-indigo-600">ID: {{ envio.id }}</span>
+                                <span class="text-xl font-bold text-gray-800">S/ {{ "%.2f"|format(envio.costo_total) }}</span>
+                            </div>
+                            <p class="text-gray-700 mt-1 font-medium">{{ envio.asunto }}</p>
+                            <p class="text-sm text-gray-500">
+                                Para: <span class="font-medium text-gray-600">{{ envio.destinatario }}</span>
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                Fecha: <span class="font-medium text-gray-600">{{ envio.fecha.strftime('%d/%m/%Y') }}</span>
+                            </p>
+                        </div>
+                        
+                        <!-- Formulario de Acción (alineado a la derecha en SM) -->
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:ml-4 space-y-2 sm:space-y-0 sm:space-x-2">
+                            <input 
+                                type="text" 
+                                id="nro-op-{{ envio.id }}"
+                                placeholder="Nro. Operación (Opcional)"
+                                class="form-input w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                            
+                            <button 
+                                onclick="marcarPagado(event, {{ envio.id }})"
+                                class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out whitespace-nowrap">
+                                Marcar Pagado
+                            </button>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            {% else %}
+                <!-- Estado vacío -->
+                <li class="p-6 text-center text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">¡Todo al día!</h3>
+                    <p class="mt-1 text-sm text-gray-500">No hay pagos pendientes por procesar.</p>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<!-- Script de JavaScript -->
+<script>
+async function marcarPagado(event, envioId) {
+    // 1. Encontrar el botón y deshabilitarlo para evitar doble click
+    const button = event.target;
+    button.disabled = true;
+    button.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Procesando...`;
+
+    // 2. Obtener el nro_operacion
+    const inputNroOp = document.getElementById(`nro-op-${envioId}`);
+    const nroOperacion = inputNroOp.value.trim();
+
+    // 3. Preparar la llamada a la API
+    try {
+        const response = await fetch('/api/admin/marcar_pagado', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // NOTA: Si usas Flask-WTF con CSRF, necesitarás enviar el token aquí.
+                // 'X-CSRFToken': '{{ csrf_token() }}' (si está configurado)
+            },
+            body: JSON.stringify({
+                id: envioId,
+                nro_operacion: nroOperacion || null // Enviar null si está vacío
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // ¡Éxito! Dar feedback visual
+            const row = document.getElementById(`envio-row-${envioId}`);
+            
+            // 1. Difuminar y deslizar
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(50px)';
+            
+            // 2. Esperar a que termine la animación para eliminarlo
+            setTimeout(() => {
+                row.remove();
+                
+                // 3. Opcional: verificar si la lista quedó vacía
+                const lista = document.getElementById('lista-pagos');
+                if (lista.getElementsByTagName('li').length === 0) {
+                    lista.innerHTML = `
+                        <li class="p-6 text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">¡Todo al día!</h3>
+                            <p class="mt-1 text-sm text-gray-500">No hay pagos pendientes por procesar.</p>
+                        </li>`;
+                }
+            }, 500); // 500ms (coincide con 'duration-500' de Tailwind)
+
+        } else {
+            // Error manejado por el backend
+            console.error('Error al marcar el pago:', result.message);
+            // Revertir el botón
+            button.disabled = false;
+            button.textContent = 'Marcar Pagado';
+            // Aquí podrías mostrar una alerta más elegante
+            alert('Error: ' + result.message);
+        }
+
+    } catch (error) {
+        // Error de red
+        console.error('Error de red:', error);
+        button.disabled = false;
+        button.textContent = 'Marcar Pagado';
+        alert('Error de red. Revisa tu conexión e intenta de nuevo.');
+    }
+}
+</script>
+{% endblock %}

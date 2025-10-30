@@ -343,5 +343,86 @@ def logout():
 #     return render_template('register.html')
 
 
+# --- (INICIO) PROPUESTA 2: PANEL DE PAGOS ADMIN ---
+
+@app.route('/admin/pagos')
+@login_required
+def admin_pagos_page():
+    """
+    Muestra la página del panel de pagos solo para administradores.
+    Obtiene todos los envíos con estado_pago = 'Pendiente'.
+    """
+    # 1. Verificar si es admin
+    if not current_user.is_admin:
+        flash('Acceso no autorizado. Esta página es solo para administradores.', 'danger')
+        return redirect(url_for('envios_page'))
+
+    # 2. Consultar envíos pendientes
+    conn = get_db_connection()
+    envios_pendientes = []
+    try:
+        with conn.cursor() as cursor:
+            # Traemos los más recientes primero
+            cursor.execute(
+                "SELECT id, asunto, costo_total, destinatario, fecha FROM envios WHERE estado_pago = 'Pendiente' ORDER BY fecha DESC"
+            )
+            envios_pendientes = cursor.fetchall()
+    except Exception as e:
+        print(f"Error al consultar envíos pendientes: {e}")
+        flash('Error al cargar la página de pagos.', 'danger')
+    finally:
+        conn.close()
+
+    # 3. Renderizar plantilla
+    return render_template('admin_pagos.html', envios=envios_pendientes)
+
+
+@app.route('/api/admin/marcar_pagado', methods=['POST'])
+@login_required
+def api_marcar_pagado():
+    """
+    API para que el admin marque un envío como 'Pagado'.
+    Acepta JSON: { "id": <envio_id>, "nro_operacion": "<num>" }
+    """
+    # 1. Verificar si es admin
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Acceso no autorizado.'}), 403
+
+    # 2. Obtener datos del JSON
+    data = request.json
+    envio_id = data.get('id')
+    nro_operacion = data.get('nro_operacion') # Puede ser None o ""
+
+    if not envio_id:
+        return jsonify({'success': False, 'message': 'ID de envío no proporcionado.'}), 400
+
+    # 3. Ejecutar UPDATE
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Actualizamos el estado y el nro_operacion
+            cursor.execute(
+                "UPDATE envios SET estado_pago = 'Pagado', nro_operacion = %s WHERE id = %s",
+                (nro_operacion, envio_id)
+            )
+        conn.commit()
+        
+        # Verificar si la fila realmente existía y fue actualizada
+        if cursor.rowcount == 0:
+             return jsonify({'success': False, 'message': 'ID de envío no encontrado.'}), 404
+
+        # Devolver éxito
+        return jsonify({'success': True, 'id': envio_id})
+
+    except Exception as e:
+        conn.rollback()
+        print(f"Error al actualizar el pago: {e}")
+        return jsonify({'success': False, 'message': 'Error en la base de datos al actualizar.'}), 500
+    finally:
+        conn.close()
+
+# --- (FIN) PROPUESTA 2: PANEL DE PAGOS ADMIN ---
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
