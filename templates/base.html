@@ -29,6 +29,7 @@
                          style="filter: invert(1);">
                     <span class="text-xl font-bold tracking-tight">Sistema de Gestión de Placas</span>
                 </a>
+                
                 <div class="flex items-center space-x-4">
                     {% if current_user.is_authenticated %}
                         <span class="text-sm text-gray-300 hidden sm:block">
@@ -36,6 +37,11 @@
                         </span>
                         
                         {% if current_user.is_admin %}
+                            
+                            <a href="{{ url_for('envios_page') }}" 
+                               class="text-sm font-medium text-yellow-400 hover:text-yellow-200 px-3 py-2 rounded-md">
+                                Ver Envíos
+                            </a>
                             <a href="{{ url_for('admin_pagos_page') }}" 
                                class="text-sm font-medium text-yellow-400 hover:text-yellow-200 px-3 py-2 rounded-md">
                                 Panel de Pagos
