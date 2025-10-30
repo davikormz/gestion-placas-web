@@ -105,7 +105,7 @@ def get_lista_proveedores():
     lista_emails = [p['email'] for p in proveedores]
     return jsonify(lista_emails)
 
-# --- RUTA /api/envios (ACTUALIZADA con lógica de Admin) ---
+# --- RUTA /api/envios (ACTUALIZADA con lógica de Admin Y CORRECCIÓN) ---
 @app.route('/api/envios')
 @login_required 
 def get_envios():
@@ -142,7 +142,7 @@ def get_envios():
         envios = cursor.fetchall()
     conn.close()
 
-    # --- Lógica de Agrupación (Sin cambios) ---
+    # --- Lógica de Agrupación (AHORA CON LIMPIEZA DE DATOS) ---
     grouped_envios = []
     current_month_key = None
     current_month_group = None
@@ -150,6 +150,14 @@ def get_envios():
     total_pagado = 0
 
     for i, envio in enumerate(envios):
+        
+        # --- INICIO DE LA CORRECCIÓN ---
+        # Limpiamos el dato 'estado_pago' ANTES de usarlo.
+        # Usamos .get() para seguridad, .strip() para limpiar espacios.
+        if envio.get('estado_pago'):
+            envio['estado_pago'] = envio['estado_pago'].strip()
+        # --- FIN DE LA CORRECCIÓN ---
+
         fecha_obj = envio['fecha']
         month_key = fecha_obj.strftime("%Y-%m")
         
@@ -178,10 +186,12 @@ def get_envios():
         current_month_group["envios"].append(envio)
         
         costo_actual = envio.get('costo_total') or 0
-        estado_actual = envio.get('estado_pago')
+        
+        # Ahora 'estado_actual' contendrá el valor limpio
+        estado_actual = envio.get('estado_pago') 
         
         total_mes += costo_actual
-        if estado_actual == 'Pagado':
+        if estado_actual == 'Pagado': # Esta comparación ahora funcionará
             total_pagado += costo_actual
 
     if current_month_group is not None:
