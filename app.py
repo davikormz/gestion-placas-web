@@ -62,11 +62,16 @@ def load_user(user_id):
     conn.close()
     
     if user_data:
+        # Obtenemos el rol y lo limpiamos de espacios
+        role_limpio = user_data.get('role', 'proveedor')
+        if role_limpio:
+            role_limpio = role_limpio.strip() # <--- ¡AQUÍ ESTÁ EL ARREGLO!
+
         return Proveedor(
             id=user_data['id'], 
             email=user_data['email'], 
             password_hash=user_data['password_hash'],
-            role=user_data.get('role', 'proveedor') # Usamos .get por seguridad
+            role=role_limpio
         )
     
     return None
